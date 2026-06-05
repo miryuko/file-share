@@ -1,7 +1,10 @@
 <script setup lang="ts">
 import { ref, onUnmounted } from "vue";
+import { useI18n } from "vue-i18n";
 import { useWebRTC } from "../composables/useWebRTC";
 import { Button } from "./ui/button";
+
+const { t } = useI18n();
 
 const props = defineProps<{
   code: string;
@@ -34,7 +37,7 @@ async function startConnection(): Promise<void> {
   try {
     await connect(props.code, props.role);
   } catch {
-    errorMsg.value = "P2P 连接失败，切换到服务器中转";
+    errorMsg.value = t('p2p.connectionFailed');
   }
 }
 
@@ -42,7 +45,7 @@ async function sendP2PFile(file: File): Promise<void> {
   try {
     await sendFile(file);
   } catch {
-    errorMsg.value = "P2P 发送失败，切换到服务器中转";
+    errorMsg.value = t('p2p.sendFailed');
     emit("fallback");
   }
 }
@@ -58,15 +61,11 @@ onUnmounted(() => {
 
 defineExpose({ startConnection, sendP2PFile });
 
-const statusText: Record<string, string> = {
-  idle: "等待连接",
-  connecting: "正在连接...",
-  signaling: "信令交换中...",
-  connected: "P2P 已连接",
-  transferring: "P2P 传输中...",
-  fallback: "已切换到服务器中转",
-  error: "P2P 错误",
-};
+function getStatusText(s: string): string {
+  const key = `p2p.${s}`;
+  const text = t(key);
+  return text !== key ? text : s;
+}
 
 function dotClass(): string {
   const s = status.value;
@@ -80,7 +79,7 @@ function dotClass(): string {
   <div v-if="isActive" class="mb-4 text-center">
     <div class="flex items-center justify-center gap-2 rounded-lg border bg-gray-50 px-4 py-2 text-sm">
       <span class="inline-block h-2 w-2 rounded-full" :class="dotClass()" />
-      <span>{{ statusText[status] || status }}</span>
+      <span>{{ getStatusText(status) }}</span>
     </div>
     <Button
       v-if="status === 'connected' || status === 'transferring'"
@@ -89,7 +88,7 @@ function dotClass(): string {
       class="mt-2 border-red-200 bg-red-50 text-red-600 hover:bg-red-100"
       @click="cancelP2P"
     >
-      切换到服务器中转
+      {{ $t('p2p.fallbackButton') }}
     </Button>
     <p v-if="errorMsg" class="mt-2 text-xs text-red-600">{{ errorMsg }}</p>
   </div>

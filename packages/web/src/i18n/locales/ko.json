@@ -1,0 +1,92 @@
+{
+  "app": {
+    "title": "File Share",
+    "nav": {
+      "send": "보내기",
+      "receive": "받기",
+      "language": "언어"
+    },
+    "footer": {
+      "notice": "파일은 1시간 후 자동 삭제됩니다 · 종단간 암호화 전송"
+    }
+  },
+  "send": {
+    "title": "File Share",
+    "subtitle": "안전하고 익명의 즉시 파일 전송",
+    "tabFile": "파일",
+    "tabText": "텍스트",
+    "dropZone": "클릭하여 파일 선택 또는 드래그 앤 드롭",
+    "fileLimits": "모든 파일 형식, 파일당 최대 100MB, 총 500MB",
+    "textPlaceholder": "텍스트를 붙여넣거나 입력하세요 (최대 1MB)...",
+    "sending": "전송 중...",
+    "sendText": "텍스트 전송",
+    "networkError": "네트워크 오류, 연결을 확인하세요",
+    "uploadError": "업로드 실패, 네트워크를 확인하고 다시 시도하세요",
+    "textCodeLabel": "텍스트 공유 코드",
+    "shareCodeLabel": "공유 코드",
+    "copied": "복사됨 ✓",
+    "copy": "복사",
+    "sendFailed": "전송 실패",
+    "sendNewContent": "새 콘텐츠 전송",
+    "sendNewFile": "새 파일 전송",
+    "qrAlt": "QR 코드",
+    "validation": {
+      "selectFile": "최소 하나의 파일을 선택하세요",
+      "maxFiles": "최대 {max}개 파일",
+      "zeroSize": "파일 \"{name}\" 크기가 0입니다",
+      "fileTooBig": "파일 \"{name}\"이(가) {limit}MB 제한을 초과합니다",
+      "totalTooBig": "총 파일 크기가 {limit}MB 제한을 초과합니다",
+      "textEmpty": "공유할 텍스트를 입력하세요",
+      "textTooLong": "텍스트가 너무 깁니다 ({size}MB), 제한은 1MB입니다. 파일 전송을 사용하세요"
+    }
+  },
+  "receive": {
+    "title": "받기",
+    "tabFile": "파일",
+    "tabText": "텍스트",
+    "codePlaceholder": "6자리 공유 코드 입력",
+    "searching": "검색 중...",
+    "receive": "받기",
+    "invalidCode": "6자리 공유 코드를 입력하세요",
+    "queryError": "조회 실패, 네트워크를 확인하고 다시 시도하세요",
+    "codeLabel": "공유 코드:",
+    "expiring": "곧 만료",
+    "expiresInMinutes": "{n}분 후 만료",
+    "expiresInHours": "{h}시간 {m}분 후 만료",
+    "download": "다운로드",
+    "remainingDownloads": "남은 다운로드: {n}회",
+    "receiveOtherFile": "다른 파일 받기",
+    "receiveOtherContent": "다른 콘텐츠 받기",
+    "copied": "복사됨 ✓",
+    "copy": "복사"
+  },
+  "admin": {
+    "title": "관리자 패널",
+    "passwordPlaceholder": "관리자 비밀번호 입력",
+    "loggingIn": "로그인 중...",
+    "login": "로그인",
+    "loginFailed": "로그인 실패",
+    "networkError": "네트워크 오류, 연결을 확인하세요",
+    "logout": "로그아웃",
+    "refresh": "새로고침",
+    "activeTransfers": "활성 전송 ({n})",
+    "noActiveTransfers": "활성 전송 없음",
+    "totalSize": "총 크기:",
+    "downloads": "다운로드:",
+    "created": "생성:",
+    "expires": "만료:",
+    "terminate": "강제 종료"
+  },
+  "p2p": {
+    "idle": "연결 대기 중",
+    "connecting": "연결 중...",
+    "signaling": "시그널링 중...",
+    "connected": "P2P 연결됨",
+    "transferring": "P2P 전송 중...",
+    "fallback": "서버 릴레이로 전환됨",
+    "error": "P2P 오류",
+    "fallbackButton": "서버 릴레이로 전환",
+    "connectionFailed": "P2P 연결 실패, 서버 릴레이로 전환합니다",
+    "sendFailed": "P2P 전송 실패, 서버 릴레이로 전환합니다"
+  }
+}

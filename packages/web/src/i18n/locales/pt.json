@@ -1,0 +1,92 @@
+{
+  "app": {
+    "title": "File Share",
+    "nav": {
+      "send": "Enviar",
+      "receive": "Receber",
+      "language": "Idioma"
+    },
+    "footer": {
+      "notice": "Arquivos são automaticamente excluídos após 1 hora · Transferência criptografada de ponta a ponta"
+    }
+  },
+  "send": {
+    "title": "File Share",
+    "subtitle": "Transferência de arquivos segura, anônima e instantânea",
+    "tabFile": "Arquivo",
+    "tabText": "Texto",
+    "dropZone": "Clique para selecionar arquivos ou arraste aqui",
+    "fileLimits": "Qualquer tipo de arquivo, máx. 100MB por arquivo, 500MB total",
+    "textPlaceholder": "Cole ou digite o conteúdo de texto aqui (máx. 1MB)...",
+    "sending": "Enviando...",
+    "sendText": "Enviar texto",
+    "networkError": "Erro de rede, verifique sua conexão",
+    "uploadError": "Falha no upload, verifique sua rede e tente novamente",
+    "textCodeLabel": "Código de texto",
+    "shareCodeLabel": "Código de compartilhamento",
+    "copied": "Copiado ✓",
+    "copy": "Copiar",
+    "sendFailed": "Falha no envio",
+    "sendNewContent": "Enviar novo conteúdo",
+    "sendNewFile": "Enviar novo arquivo",
+    "qrAlt": "Código QR",
+    "validation": {
+      "selectFile": "Selecione pelo menos um arquivo",
+      "maxFiles": "Máximo de {max} arquivos",
+      "zeroSize": "Arquivo \"{name}\" está vazio",
+      "fileTooBig": "Arquivo \"{name}\" excede o limite de {limit}MB",
+      "totalTooBig": "Tamanho total excede o limite de {limit}MB",
+      "textEmpty": "Digite o conteúdo de texto para compartilhar",
+      "textTooLong": "Texto muito longo ({size}MB), limite de 1MB, use a transferência de arquivos"
+    }
+  },
+  "receive": {
+    "title": "Receber",
+    "tabFile": "Arquivo",
+    "tabText": "Texto",
+    "codePlaceholder": "Digite o código de 6 dígitos",
+    "searching": "Buscando...",
+    "receive": "Receber",
+    "invalidCode": "Digite um código de 6 dígitos",
+    "queryError": "Falha na consulta, verifique sua rede e tente novamente",
+    "codeLabel": "Código:",
+    "expiring": "Expirando em breve",
+    "expiresInMinutes": "Expira em {n} minutos",
+    "expiresInHours": "Expira em {h} horas {m} minutos",
+    "download": "Baixar",
+    "remainingDownloads": "Downloads restantes: {n}",
+    "receiveOtherFile": "Receber outros arquivos",
+    "receiveOtherContent": "Receber outro conteúdo",
+    "copied": "Copiado ✓",
+    "copy": "Copiar"
+  },
+  "admin": {
+    "title": "Painel de administração",
+    "passwordPlaceholder": "Digite a senha de administrador",
+    "loggingIn": "Entrando...",
+    "login": "Entrar",
+    "loginFailed": "Falha no login",
+    "networkError": "Erro de rede, verifique sua conexão",
+    "logout": "Sair",
+    "refresh": "Atualizar",
+    "activeTransfers": "Transferências ativas ({n})",
+    "noActiveTransfers": "Nenhuma transferência ativa",
+    "totalSize": "Tamanho total:",
+    "downloads": "Downloads:",
+    "created": "Criado:",
+    "expires": "Expira:",
+    "terminate": "Forçar término"
+  },
+  "p2p": {
+    "idle": "Aguardando conexão",
+    "connecting": "Conectando...",
+    "signaling": "Sinalizando...",
+    "connected": "P2P conectado",
+    "transferring": "Transferência P2P...",
+    "fallback": "Alternado para retransmissão do servidor",
+    "error": "Erro P2P",
+    "fallbackButton": "Alternar para retransmissão",
+    "connectionFailed": "Conexão P2P falhou, alternando para retransmissão",
+    "sendFailed": "Envio P2P falhou, alternando para retransmissão"
+  }
+}

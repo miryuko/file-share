@@ -1,0 +1,92 @@
+{
+  "app": {
+    "title": "File Share",
+    "nav": {
+      "send": "送信",
+      "receive": "受信",
+      "language": "言語"
+    },
+    "footer": {
+      "notice": "ファイルは1時間後に自動的に削除されます · エンドツーエンド暗号化転送"
+    }
+  },
+  "send": {
+    "title": "File Share",
+    "subtitle": "安全・匿名・瞬時のファイル転送",
+    "tabFile": "ファイル",
+    "tabText": "テキスト",
+    "dropZone": "クリックしてファイルを選択、またはドラッグ＆ドロップ",
+    "fileLimits": "任意のファイル形式、1ファイル最大100MB、合計500MB",
+    "textPlaceholder": "テキストを貼り付けまたは入力（最大1MB）...",
+    "sending": "送信中...",
+    "sendText": "テキストを送信",
+    "networkError": "ネットワークエラー、接続を確認してください",
+    "uploadError": "アップロードに失敗しました。ネットワークを確認して再試行してください",
+    "textCodeLabel": "テキスト共有コード",
+    "shareCodeLabel": "共有コード",
+    "copied": "コピーしました ✓",
+    "copy": "コピー",
+    "sendFailed": "送信に失敗しました",
+    "sendNewContent": "新しいコンテンツを送信",
+    "sendNewFile": "新しいファイルを送信",
+    "qrAlt": "QRコード",
+    "validation": {
+      "selectFile": "少なくとも1つのファイルを選択してください",
+      "maxFiles": "最大{max}ファイルまで",
+      "zeroSize": "ファイル \"{name}\" のサイズが0です",
+      "fileTooBig": "ファイル \"{name}\" が{limit}MBの制限を超えています",
+      "totalTooBig": "合計ファイルサイズが{limit}MBの制限を超えています",
+      "textEmpty": "共有するテキストを入力してください",
+      "textTooLong": "テキストが長すぎます（{size}MB）、制限は1MBです。ファイル転送を使用してください"
+    }
+  },
+  "receive": {
+    "title": "受信",
+    "tabFile": "ファイル",
+    "tabText": "テキスト",
+    "codePlaceholder": "6桁の共有コードを入力",
+    "searching": "検索中...",
+    "receive": "受信",
+    "invalidCode": "6桁の共有コードを入力してください",
+    "queryError": "クエリに失敗しました。ネットワークを確認して再試行してください",
+    "codeLabel": "共有コード:",
+    "expiring": "まもなく期限切れ",
+    "expiresInMinutes": "{n}分後に期限切れ",
+    "expiresInHours": "{h}時間{m}分後に期限切れ",
+    "download": "ダウンロード",
+    "remainingDownloads": "残りダウンロード: {n}回",
+    "receiveOtherFile": "他のファイルを受信",
+    "receiveOtherContent": "他のコンテンツを受信",
+    "copied": "コピーしました ✓",
+    "copy": "コピー"
+  },
+  "admin": {
+    "title": "管理パネル",
+    "passwordPlaceholder": "管理者パスワードを入力",
+    "loggingIn": "ログイン中...",
+    "login": "ログイン",
+    "loginFailed": "ログインに失敗しました",
+    "networkError": "ネットワークエラー、接続を確認してください",
+    "logout": "ログアウト",
+    "refresh": "更新",
+    "activeTransfers": "アクティブな転送 ({n})",
+    "noActiveTransfers": "アクティブな転送はありません",
+    "totalSize": "合計サイズ:",
+    "downloads": "ダウンロード:",
+    "created": "作成:",
+    "expires": "期限切れ:",
+    "terminate": "強制終了"
+  },
+  "p2p": {
+    "idle": "接続待機中",
+    "connecting": "接続中...",
+    "signaling": "シグナリング中...",
+    "connected": "P2P接続完了",
+    "transferring": "P2P転送中...",
+    "fallback": "サーバーリレーに切り替えました",
+    "error": "P2Pエラー",
+    "fallbackButton": "サーバーリレーに切り替え",
+    "connectionFailed": "P2P接続に失敗しました。サーバーリレーに切り替えます",
+    "sendFailed": "P2P送信に失敗しました。サーバーリレーに切り替えます"
+  }
+}

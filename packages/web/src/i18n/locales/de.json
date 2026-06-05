@@ -1,0 +1,92 @@
+{
+  "app": {
+    "title": "File Share",
+    "nav": {
+      "send": "Senden",
+      "receive": "Empfangen",
+      "language": "Sprache"
+    },
+    "footer": {
+      "notice": "Dateien werden nach 1 Stunde automatisch gelöscht · Ende-zu-Ende-verschlüsselte Übertragung"
+    }
+  },
+  "send": {
+    "title": "File Share",
+    "subtitle": "Sichere, anonyme, sofortige Dateiübertragung",
+    "tabFile": "Datei",
+    "tabText": "Text",
+    "dropZone": "Klicken Sie, um Dateien auszuwählen oder hierher zu ziehen",
+    "fileLimits": "Alle Dateitypen, max. 100MB pro Datei, 500MB insgesamt",
+    "textPlaceholder": "Text hier einfügen oder eingeben (max. 1MB)...",
+    "sending": "Wird gesendet...",
+    "sendText": "Text senden",
+    "networkError": "Netzwerkfehler, bitte überprüfen Sie Ihre Verbindung",
+    "uploadError": "Upload fehlgeschlagen, bitte überprüfen Sie Ihr Netzwerk und versuchen Sie es erneut",
+    "textCodeLabel": "Text-Share-Code",
+    "shareCodeLabel": "Share-Code",
+    "copied": "Kopiert ✓",
+    "copy": "Kopieren",
+    "sendFailed": "Senden fehlgeschlagen",
+    "sendNewContent": "Neuen Inhalt senden",
+    "sendNewFile": "Neue Datei senden",
+    "qrAlt": "QR-Code",
+    "validation": {
+      "selectFile": "Bitte wählen Sie mindestens eine Datei aus",
+      "maxFiles": "Maximal {max} Dateien",
+      "zeroSize": "Datei \"{name}\" ist leer",
+      "fileTooBig": "Datei \"{name}\" überschreitet das Limit von {limit}MB",
+      "totalTooBig": "Gesamtgröße überschreitet das Limit von {limit}MB",
+      "textEmpty": "Bitte geben Sie den zu teilenden Text ein",
+      "textTooLong": "Text zu lang ({size}MB), Limit ist 1MB, bitte Dateiübertragung verwenden"
+    }
+  },
+  "receive": {
+    "title": "Empfangen",
+    "tabFile": "Datei",
+    "tabText": "Text",
+    "codePlaceholder": "6-stelligen Share-Code eingeben",
+    "searching": "Suche...",
+    "receive": "Empfangen",
+    "invalidCode": "Bitte geben Sie einen 6-stelligen Share-Code ein",
+    "queryError": "Abfrage fehlgeschlagen, bitte überprüfen Sie Ihr Netzwerk und versuchen Sie es erneut",
+    "codeLabel": "Share-Code:",
+    "expiring": "Läuft bald ab",
+    "expiresInMinutes": "Läuft in {n} Minuten ab",
+    "expiresInHours": "Läuft in {h} Stunden {m} Minuten ab",
+    "download": "Herunterladen",
+    "remainingDownloads": "Verbleibende Downloads: {n}",
+    "receiveOtherFile": "Andere Dateien empfangen",
+    "receiveOtherContent": "Andere Inhalte empfangen",
+    "copied": "Kopiert ✓",
+    "copy": "Kopieren"
+  },
+  "admin": {
+    "title": "Admin-Panel",
+    "passwordPlaceholder": "Admin-Passwort eingeben",
+    "loggingIn": "Anmeldung...",
+    "login": "Anmelden",
+    "loginFailed": "Anmeldung fehlgeschlagen",
+    "networkError": "Netzwerkfehler, bitte überprüfen Sie Ihre Verbindung",
+    "logout": "Abmelden",
+    "refresh": "Aktualisieren",
+    "activeTransfers": "Aktive Übertragungen ({n})",
+    "noActiveTransfers": "Keine aktiven Übertragungen",
+    "totalSize": "Gesamtgröße:",
+    "downloads": "Downloads:",
+    "created": "Erstellt:",
+    "expires": "Läuft ab:",
+    "terminate": "Erzwingen"
+  },
+  "p2p": {
+    "idle": "Warte auf Verbindung",
+    "connecting": "Verbinde...",
+    "signaling": "Signalisierung...",
+    "connected": "P2P verbunden",
+    "transferring": "P2P-Übertragung...",
+    "fallback": "Auf Server-Relay umgeschaltet",
+    "error": "P2P-Fehler",
+    "fallbackButton": "Auf Server-Relay umschalten",
+    "connectionFailed": "P2P-Verbindung fehlgeschlagen, schalte auf Server-Relay um",
+    "sendFailed": "P2P-Senden fehlgeschlagen, schalte auf Server-Relay um"
+  }
+}

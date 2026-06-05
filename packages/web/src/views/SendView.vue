@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, computed } from "vue";
+import { useI18n } from "vue-i18n";
 import { useFileUpload } from "../composables/useFileUpload";
 import { ApiError } from "../lib/api";
 import { generateQRCodeDataURI } from "../lib/qrcode";
@@ -9,6 +10,8 @@ import { Card, CardContent } from "../components/ui/card";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "../components/ui/tabs";
 import { Progress } from "../components/ui/progress";
 import { Textarea } from "../components/ui/textarea";
+
+const { t } = useI18n();
 
 type ShareMode = "file" | "text";
 
@@ -39,21 +42,21 @@ const MAX_FILE_SIZE = 100 * 1024 * 1024;
 const MAX_FILES = 20;
 
 function validateFiles(selectedFiles: File[]): string | null {
-  if (selectedFiles.length === 0) return "请选择至少一个文件";
-  if (selectedFiles.length > MAX_FILES) return `最多选择 ${MAX_FILES} 个文件`;
+  if (selectedFiles.length === 0) return t('send.validation.selectFile');
+  if (selectedFiles.length > MAX_FILES) return t('send.validation.maxFiles', { max: MAX_FILES });
 
   for (const f of selectedFiles) {
-    if (f.size <= 0) return `文件 "${f.name}" 大小为 0`;
+    if (f.size <= 0) return t('send.validation.zeroSize', { name: f.name });
     if (f.size > MAX_FILE_SIZE) {
       const limitMB = (MAX_FILE_SIZE / (1024 * 1024)).toFixed(0);
-      return `文件 "${f.name}" 超过 ${limitMB}MB 限制`;
+      return t('send.validation.fileTooBig', { name: f.name, limit: limitMB });
     }
   }
 
   const total = selectedFiles.reduce((s, f) => s + f.size, 0);
   if (total > MAX_TOTAL_SIZE) {
     const limitMB = (MAX_TOTAL_SIZE / (1024 * 1024)).toFixed(0);
-    return `总文件大小超过 ${limitMB}MB 限制`;
+    return t('send.validation.totalTooBig', { limit: limitMB });
   }
 
   return null;
@@ -78,7 +81,7 @@ async function handleFiles(selectedFiles: FileList | File[]): Promise<void> {
     if (err instanceof ApiError) {
       errorMessage.value = err.message;
     } else {
-      errorMessage.value = "上传失败，请检查网络后重试";
+      errorMessage.value = t('send.uploadError');
     }
   }
 }
@@ -107,14 +110,14 @@ async function handleTextSend(): Promise<void> {
   const content = textContent.value.trim();
 
   if (!content) {
-    textError.value = "请输入要分享的文本内容";
+    textError.value = t('send.validation.textEmpty');
     return;
   }
 
   const bytes = encoder.encode(content);
   if (bytes.byteLength > MAX_TEXT_SIZE) {
     const sizeMB = (bytes.byteLength / (1024 * 1024)).toFixed(1);
-    textError.value = `文本过长（${sizeMB}MB），当前限制 1MB，请使用文件传输`;
+    textError.value = t('send.validation.textTooLong', { size: sizeMB });
     return;
   }
 
@@ -128,14 +131,14 @@ async function handleTextSend(): Promise<void> {
 
     if (!res.ok) {
       const body = (await res.json()) as { message: string };
-      textError.value = body.message || "发送失败";
+      textError.value = body.message || t('send.sendFailed');
       return;
     }
 
     const { code } = (await res.json()) as { code: string };
     textCode.value = code;
   } catch {
-    textError.value = "网络异常，请检查连接";
+    textError.value = t('send.networkError');
   } finally {
     textLoading.value = false;
   }
@@ -166,14 +169,14 @@ function formatSize(bytes: number): string {
 
 <template>
   <div class="mx-auto max-w-[480px] px-4 py-8">
-    <h1 class="mb-1 text-center text-2xl font-bold">File Share</h1>
-    <p class="mb-6 text-center text-sm text-gray-500">安全、匿名、即时的文件传输</p>
+    <h1 class="mb-1 text-center text-2xl font-bold">{{ $t('send.title') }}</h1>
+    <p class="mb-6 text-center text-sm text-gray-500">{{ $t('send.subtitle') }}</p>
 
     <!-- 模式切换 -->
     <Tabs v-if="!shareCode && !textCode" v-model="mode" class="mb-6">
       <TabsList class="grid w-full grid-cols-2">
-        <TabsTrigger value="file">文件</TabsTrigger>
-        <TabsTrigger value="text">文本</TabsTrigger>
+        <TabsTrigger value="file">{{ $t('send.tabFile') }}</TabsTrigger>
+        <TabsTrigger value="text">{{ $t('send.tabText') }}</TabsTrigger>
       </TabsList>
       <TabsContent value="file" class="mt-4">
         <!-- 文件上传区域 -->
@@ -191,8 +194,8 @@ function formatSize(bytes: number): string {
               d="M11 16V7.85l-2.6 2.6L7 9l5-5 5 5-1.4 1.45-2.6-2.6V16h-2Zm-4 4q-.825 0-1.413-.588T5 18v-3h2v3h12v-3h2v3q0 .825-.588 1.413T19 20H7Z"
             />
           </svg>
-          <p class="mb-2 text-lg">点击选择文件或拖拽到此处</p>
-          <p class="text-xs text-gray-400">支持任意文件，单文件最大 100MB，总大小 500MB</p>
+          <p class="mb-2 text-lg">{{ $t('send.dropZone') }}</p>
+          <p class="text-xs text-gray-400">{{ $t('send.fileLimits') }}</p>
         </div>
         <input ref="fileInput" type="file" multiple class="hidden" @change="onFileChange" />
         <div
@@ -205,7 +208,7 @@ function formatSize(bytes: number): string {
       <TabsContent value="text" class="mt-4 space-y-3">
         <Textarea
           v-model="textContent"
-          placeholder="在此粘贴或输入文本内容（限 1MB）..."
+          :placeholder="$t('send.textPlaceholder')"
           :rows="8"
           class="resize-y"
         />
@@ -214,7 +217,7 @@ function formatSize(bytes: number): string {
             {{ encoder.encode(textContent).byteLength.toLocaleString() }} bytes
           </span>
           <Button :disabled="!textContent.trim() || textLoading" @click="handleTextSend">
-            {{ textLoading ? "发送中..." : "发送文本" }}
+            {{ textLoading ? $t('send.sending') : $t('send.sendText') }}
           </Button>
         </div>
         <div
@@ -242,40 +245,40 @@ function formatSize(bytes: number): string {
     <div v-if="textCode" class="text-center">
       <Card class="mb-6 bg-sky-50">
         <CardContent class="p-8 text-center">
-          <p class="mb-2 text-sm text-gray-500">文本分享码</p>
+          <p class="mb-2 text-sm text-gray-500">{{ $t('send.textCodeLabel') }}</p>
           <p class="mb-4 font-mono text-4xl font-bold tracking-[0.3em] text-blue-800">{{ textCode }}</p>
           <img
             v-if="qrCodeURI"
             :src="qrCodeURI"
-            alt="QR Code"
+            :alt="$t('send.qrAlt')"
             class="mx-auto mb-4 rounded-lg border"
             width="160"
             height="160"
           />
           <Button @click="copyTextCode">
-            {{ textCopied ? "已复制 ✓" : "一键复制" }}
+            {{ textCopied ? $t('send.copied') : $t('send.copy') }}
           </Button>
         </CardContent>
       </Card>
-      <Button variant="secondary" class="mt-4" @click="resetAll">发送新内容</Button>
+      <Button variant="secondary" class="mt-4" @click="resetAll">{{ $t('send.sendNewContent') }}</Button>
     </div>
 
     <!-- 文件上传完成 -->
     <div v-if="shareCode && !isUploading" class="text-center">
       <Card class="mb-6 bg-sky-50">
         <CardContent class="p-8 text-center">
-          <p class="mb-2 text-sm text-gray-500">分享码</p>
+          <p class="mb-2 text-sm text-gray-500">{{ $t('send.shareCodeLabel') }}</p>
           <p class="mb-4 font-mono text-4xl font-bold tracking-[0.3em] text-blue-800">{{ shareCode }}</p>
           <img
             v-if="qrCodeURI"
             :src="qrCodeURI"
-            alt="QR Code"
+            :alt="$t('send.qrAlt')"
             class="mx-auto mb-4 rounded-lg border"
             width="160"
             height="160"
           />
           <Button @click="copyCode">
-            {{ copied ? "已复制 ✓" : "一键复制" }}
+            {{ copied ? $t('send.copied') : $t('send.copy') }}
           </Button>
         </CardContent>
       </Card>
@@ -300,7 +303,7 @@ function formatSize(bytes: number): string {
         </div>
       </div>
 
-      <Button variant="secondary" class="mt-4" @click="resetAll">发送新文件</Button>
+      <Button variant="secondary" class="mt-4" @click="resetAll">{{ $t('send.sendNewFile') }}</Button>
     </div>
   </div>
 </template>

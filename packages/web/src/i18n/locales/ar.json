@@ -1,0 +1,92 @@
+{
+  "app": {
+    "title": "File Share",
+    "nav": {
+      "send": "إرسال",
+      "receive": "استلام",
+      "language": "اللغة"
+    },
+    "footer": {
+      "notice": "يتم حذف الملفات تلقائيًا بعد ساعة واحدة · نقل مشفر من طرف إلى طرف"
+    }
+  },
+  "send": {
+    "title": "File Share",
+    "subtitle": "نقل ملفات آمن ومجهول وفوري",
+    "tabFile": "ملف",
+    "tabText": "نص",
+    "dropZone": "انقر لتحديد الملفات أو اسحبها هنا",
+    "fileLimits": "أي نوع ملفات، الحد الأقصى 100MB لكل ملف، 500MB إجمالي",
+    "textPlaceholder": "الصق أو اكتب محتوى النص هنا (الحد الأقصى 1MB)...",
+    "sending": "جاري الإرسال...",
+    "sendText": "إرسال النص",
+    "networkError": "خطأ في الشبكة، يرجى التحقق من اتصالك",
+    "uploadError": "فشل التحميل، يرجى التحقق من الشبكة والمحاولة مرة أخرى",
+    "textCodeLabel": "رمز مشاركة النص",
+    "shareCodeLabel": "رمز المشاركة",
+    "copied": "تم النسخ ✓",
+    "copy": "نسخ",
+    "sendFailed": "فشل الإرسال",
+    "sendNewContent": "إرسال محتوى جديد",
+    "sendNewFile": "إرسال ملف جديد",
+    "qrAlt": "رمز QR",
+    "validation": {
+      "selectFile": "يرجى تحديد ملف واحد على الأقل",
+      "maxFiles": "الحد الأقصى {max} ملفات",
+      "zeroSize": "الملف \"{name}\" فارغ",
+      "fileTooBig": "الملف \"{name}\" يتجاوز حد {limit}MB",
+      "totalTooBig": "الحجم الإجمالي يتجاوز حد {limit}MB",
+      "textEmpty": "يرجى إدخال محتوى نصي للمشاركة",
+      "textTooLong": "النص طويل جدًا ({size}MB)، الحد هو 1MB، يرجى استخدام نقل الملفات"
+    }
+  },
+  "receive": {
+    "title": "استلام",
+    "tabFile": "ملف",
+    "tabText": "نص",
+    "codePlaceholder": "أدخل رمز المشاركة المكون من 6 أرقام",
+    "searching": "جاري البحث...",
+    "receive": "استلام",
+    "invalidCode": "يرجى إدخال رمز مشاركة مكون من 6 أرقام",
+    "queryError": "فشل الاستعلام، يرجى التحقق من الشبكة والمحاولة مرة أخرى",
+    "codeLabel": "رمز المشاركة:",
+    "expiring": "ينتهي قريبًا",
+    "expiresInMinutes": "ينتهي خلال {n} دقيقة",
+    "expiresInHours": "ينتهي خلال {h} ساعة و {m} دقيقة",
+    "download": "تحميل",
+    "remainingDownloads": "التحميلات المتبقية: {n}",
+    "receiveOtherFile": "استلام ملفات أخرى",
+    "receiveOtherContent": "استلام محتوى آخر",
+    "copied": "تم النسخ ✓",
+    "copy": "نسخ"
+  },
+  "admin": {
+    "title": "لوحة الإدارة",
+    "passwordPlaceholder": "أدخل كلمة مرور المسؤول",
+    "loggingIn": "جاري تسجيل الدخول...",
+    "login": "تسجيل الدخول",
+    "loginFailed": "فشل تسجيل الدخول",
+    "networkError": "خطأ في الشبكة، يرجى التحقق من اتصالك",
+    "logout": "تسجيل الخروج",
+    "refresh": "تحديث",
+    "activeTransfers": "النقل النشط ({n})",
+    "noActiveTransfers": "لا توجد عمليات نقل نشطة",
+    "totalSize": "الحجم الإجمالي:",
+    "downloads": "التحميلات:",
+    "created": "تم الإنشاء:",
+    "expires": "ينتهي:",
+    "terminate": "إنهاء إجباري"
+  },
+  "p2p": {
+    "idle": "في انتظار الاتصال",
+    "connecting": "جاري الاتصال...",
+    "signaling": "جاري الإشارة...",
+    "connected": "P2P متصل",
+    "transferring": "جاري النقل P2P...",
+    "fallback": "تم التبديل إلى ترحيل الخادم",
+    "error": "خطأ P2P",
+    "fallbackButton": "التبديل إلى ترحيل الخادم",
+    "connectionFailed": "فشل اتصال P2P، جاري التبديل إلى ترحيل الخادم",
+    "sendFailed": "فشل إرسال P2P، جاري التبديل إلى ترحيل الخادم"
+  }
+}

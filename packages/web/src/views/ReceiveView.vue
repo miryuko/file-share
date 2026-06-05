@@ -1,11 +1,14 @@
 <script setup lang="ts">
 import { ref } from "vue";
+import { useI18n } from "vue-i18n";
 import { getSession, getDownloadUrl, ApiError } from "../lib/api";
 import P2PTransfer from "../components/P2PTransfer.vue";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { Card, CardContent } from "../components/ui/card";
 import { Tabs, TabsList, TabsTrigger } from "../components/ui/tabs";
+
+const { t } = useI18n();
 
 type ReceiveMode = "file" | "text";
 
@@ -40,7 +43,7 @@ function onCodeInput(event: Event): void {
 async function handleReceive(): Promise<void> {
   const code = codeInput.value.trim().toUpperCase();
   if (code.length !== 6) {
-    errorMessage.value = "请输入 6 位分享码";
+    errorMessage.value = t('receive.invalidCode');
     return;
   }
 
@@ -64,7 +67,7 @@ async function handleReceive(): Promise<void> {
     if (err instanceof ApiError) {
       errorMessage.value = err.message;
     } else {
-      errorMessage.value = "查询失败，请检查网络后重试";
+      errorMessage.value = t('receive.queryError');
     }
   } finally {
     isLoading.value = false;
@@ -88,10 +91,10 @@ function formatSize(bytes: number): string {
 
 function formatExpiry(expiresAt: number): string {
   const remaining = Math.max(0, Math.ceil((expiresAt - Date.now()) / 60000));
-  if (remaining < 1) return "即将过期";
-  if (remaining < 60) return `${remaining} 分钟后过期`;
+  if (remaining < 1) return t('receive.expiring');
+  if (remaining < 60) return t('receive.expiresInMinutes', { n: remaining });
   const hours = Math.floor(remaining / 60);
-  return `${hours} 小时 ${remaining % 60} 分钟后过期`;
+  return t('receive.expiresInHours', { h: hours, m: remaining % 60 });
 }
 
 function handleP2PFileReceived(file: { name: string; data: ArrayBuffer; size: number }): void {
@@ -114,13 +117,13 @@ function reset(): void {
 
 <template>
   <div class="mx-auto max-w-[480px] px-4 py-8">
-    <h1 class="mb-6 text-center text-2xl font-bold">接收</h1>
+    <h1 class="mb-6 text-center text-2xl font-bold">{{ $t('receive.title') }}</h1>
 
     <!-- 模式切换 -->
     <Tabs v-if="!session && !textResult" v-model="receiveMode" class="mb-6">
       <TabsList class="grid w-full grid-cols-2">
-        <TabsTrigger value="file">文件</TabsTrigger>
-        <TabsTrigger value="text">文本</TabsTrigger>
+        <TabsTrigger value="file">{{ $t('receive.tabFile') }}</TabsTrigger>
+        <TabsTrigger value="text">{{ $t('receive.tabText') }}</TabsTrigger>
       </TabsList>
     </Tabs>
 
@@ -130,14 +133,14 @@ function reset(): void {
         <Input
           v-model="codeInput"
           maxlength="6"
-          placeholder="输入 6 位分享码"
+          :placeholder="$t('receive.codePlaceholder')"
           autocomplete="off"
           class="flex-1 text-center font-mono text-2xl tracking-[0.3em] uppercase"
           @input="onCodeInput"
           @keyup.enter="handleReceive"
         />
         <Button :disabled="codeInput.length !== 6 || isLoading" @click="handleReceive">
-          {{ isLoading ? "查询中..." : "接收" }}
+          {{ isLoading ? $t('receive.searching') : $t('receive.receive') }}
         </Button>
       </div>
       <div
@@ -151,9 +154,9 @@ function reset(): void {
     <!-- 文件列表 -->
     <div v-if="session" class="text-center">
       <div class="mb-6 flex flex-col gap-1 rounded-lg bg-sky-50 p-4 text-sm text-gray-600">
-        <span>分享码: <strong class="text-lg text-blue-800">{{ session.code }}</strong></span>
+        <span>{{ $t('receive.codeLabel') }} <strong class="text-lg text-blue-800">{{ session.code }}</strong></span>
         <span>{{ formatExpiry(session.expiresAt) }}</span>
-        <span>剩余下载: {{ session.remainingDownloads }} 次</span>
+        <span>{{ $t('receive.remainingDownloads', { n: session.remainingDownloads }) }}</span>
       </div>
 
       <P2PTransfer
@@ -170,14 +173,14 @@ function reset(): void {
               <p class="text-xs text-gray-400">{{ formatSize(file.size) }}</p>
             </div>
             <a :href="getDownloadUrl(session.code, file.fileId)" download>
-              <Button variant="default" class="bg-green-600 hover:bg-green-700">下载</Button>
+              <Button variant="default" class="bg-green-600 hover:bg-green-700">{{ $t('receive.download') }}</Button>
             </a>
           </CardContent>
         </Card>
       </div>
 
       <Button variant="secondary" class="mt-6 w-full" @click="reset">
-        接收其他文件
+        {{ $t('receive.receiveOtherFile') }}
       </Button>
     </div>
 
@@ -193,10 +196,10 @@ function reset(): void {
         <span>{{ encoder.encode(textResult.content).byteLength.toLocaleString() }} bytes</span>
       </div>
       <Button class="mb-4" @click="copyTextContent">
-        {{ textCopied ? "已复制 ✓" : "一键复制" }}
+        {{ textCopied ? $t('receive.copied') : $t('receive.copy') }}
       </Button>
       <Button variant="secondary" class="mt-4 w-full" @click="reset">
-        接收其他内容
+        {{ $t('receive.receiveOtherContent') }}
       </Button>
     </div>
   </div>

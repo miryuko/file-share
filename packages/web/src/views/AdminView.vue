@@ -1,9 +1,12 @@
 <script setup lang="ts">
 import { ref, onMounted } from "vue";
+import { useI18n } from "vue-i18n";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { Card, CardContent, CardHeader } from "../components/ui/card";
 import { Badge } from "../components/ui/badge";
+
+const { t, locale } = useI18n();
 
 const TOKEN_KEY = "admin_token";
 
@@ -49,7 +52,7 @@ async function handleLogin(): Promise<void> {
 
     if (!res.ok) {
       const body = await res.json();
-      loginError.value = body.message || "登录失败";
+      loginError.value = body.message || t('admin.loginFailed');
       return;
     }
 
@@ -58,7 +61,7 @@ async function handleLogin(): Promise<void> {
     isLoggedIn.value = true;
     await loadData();
   } catch {
-    loginError.value = "网络异常，请检查连接";
+    loginError.value = t('admin.networkError');
   } finally {
     isLoading.value = false;
   }
@@ -122,7 +125,7 @@ function formatSize(bytes: number): string {
 }
 
 function formatTime(ts: number): string {
-  return new Date(ts).toLocaleString("zh-CN");
+  return new Date(ts).toLocaleString(locale.value);
 }
 
 function statusBadgeClass(status: string): string {
@@ -145,7 +148,7 @@ onMounted(() => {
 
 <template>
   <div class="mx-auto max-w-[720px] px-4 py-8">
-    <h1 class="mb-8 text-center text-2xl font-bold">管理面板</h1>
+    <h1 class="mb-8 text-center text-2xl font-bold">{{ $t('admin.title') }}</h1>
 
     <!-- 登录表单 -->
     <div v-if="!isLoggedIn" class="mx-auto mt-8 max-w-[360px]">
@@ -153,12 +156,12 @@ onMounted(() => {
         <Input
           v-model="password"
           type="password"
-          placeholder="请输入管理员密码"
+          :placeholder="$t('admin.passwordPlaceholder')"
           class="flex-1"
           @keyup.enter="handleLogin"
         />
         <Button :disabled="!password || isLoading" @click="handleLogin">
-          {{ isLoading ? "登录中..." : "登录" }}
+          {{ isLoading ? $t('admin.loggingIn') : $t('admin.login') }}
         </Button>
       </div>
       <div
@@ -172,14 +175,14 @@ onMounted(() => {
     <!-- 管理面板内容 -->
     <div v-if="isLoggedIn" class="dashboard">
       <div class="mb-8 flex gap-3">
-        <Button variant="destructive" @click="handleLogout">退出登录</Button>
-        <Button variant="secondary" @click="loadData">刷新</Button>
+        <Button variant="destructive" @click="handleLogout">{{ $t('admin.logout') }}</Button>
+        <Button variant="secondary" @click="loadData">{{ $t('admin.refresh') }}</Button>
       </div>
 
       <!-- 活跃传输 -->
       <section>
-        <h2 class="mb-4 text-lg font-semibold">活跃传输 ({{ sessions.length }})</h2>
-        <p v-if="sessions.length === 0" class="italic text-gray-400">暂无活跃传输</p>
+        <h2 class="mb-4 text-lg font-semibold">{{ $t('admin.activeTransfers', { n: sessions.length }) }}</h2>
+        <p v-if="sessions.length === 0" class="italic text-gray-400">{{ $t('admin.noActiveTransfers') }}</p>
         <Card v-for="s in sessions" :key="s.code" class="mb-3">
           <CardHeader class="pb-0">
             <div class="flex items-center gap-3">
@@ -195,10 +198,10 @@ onMounted(() => {
               </p>
             </div>
             <div class="mb-3 flex flex-wrap gap-4 text-xs text-gray-400">
-              <span>总大小: {{ formatSize(s.totalSize) }}</span>
-              <span>下载: {{ s.downloadCount }}/{{ s.maxDownloads }}</span>
-              <span>创建: {{ formatTime(s.createdAt) }}</span>
-              <span>过期: {{ formatTime(s.expiresAt) }}</span>
+              <span>{{ $t('admin.totalSize') }} {{ formatSize(s.totalSize) }}</span>
+              <span>{{ $t('admin.downloads') }} {{ s.downloadCount }}/{{ s.maxDownloads }}</span>
+              <span>{{ $t('admin.created') }} {{ formatTime(s.createdAt) }}</span>
+              <span>{{ $t('admin.expires') }} {{ formatTime(s.expiresAt) }}</span>
             </div>
             <Button
               variant="outline"
@@ -206,7 +209,7 @@ onMounted(() => {
               class="border-red-200 bg-red-50 text-red-600 hover:bg-red-100"
               @click="handleTerminate(s.code)"
             >
-              强制终止
+              {{ $t('admin.terminate') }}
             </Button>
           </CardContent>
         </Card>

@@ -1,0 +1,92 @@
+{
+  "app": {
+    "title": "File Share",
+    "nav": {
+      "send": "傳送",
+      "receive": "接收",
+      "language": "語言"
+    },
+    "footer": {
+      "notice": "檔案於伺服器保留 1 小時後自動刪除 · 端對端加密傳輸"
+    }
+  },
+  "send": {
+    "title": "File Share",
+    "subtitle": "安全、匿名、即時的檔案傳輸",
+    "tabFile": "檔案",
+    "tabText": "文字",
+    "dropZone": "點擊選取檔案或拖曳到此處",
+    "fileLimits": "支援任意檔案，單檔最大 100MB，總大小 500MB",
+    "textPlaceholder": "在此貼上或輸入文字內容（限 1MB）...",
+    "sending": "傳送中...",
+    "sendText": "傳送文字",
+    "networkError": "網路異常，請檢查連線",
+    "uploadError": "上傳失敗，請檢查網路後重試",
+    "textCodeLabel": "文字分享碼",
+    "shareCodeLabel": "分享碼",
+    "copied": "已複製 ✓",
+    "copy": "一鍵複製",
+    "sendFailed": "傳送失敗",
+    "sendNewContent": "傳送新內容",
+    "sendNewFile": "傳送新檔案",
+    "qrAlt": "QR Code",
+    "validation": {
+      "selectFile": "請選取至少一個檔案",
+      "maxFiles": "最多選取 {max} 個檔案",
+      "zeroSize": "檔案「{name}」大小為 0",
+      "fileTooBig": "檔案「{name}」超過 {limit}MB 限制",
+      "totalTooBig": "總檔案大小超過 {limit}MB 限制",
+      "textEmpty": "請輸入要分享的文字內容",
+      "textTooLong": "文字過長（{size}MB），目前限制 1MB，請使用檔案傳輸"
+    }
+  },
+  "receive": {
+    "title": "接收",
+    "tabFile": "檔案",
+    "tabText": "文字",
+    "codePlaceholder": "輸入 6 位分享碼",
+    "searching": "查詢中...",
+    "receive": "接收",
+    "invalidCode": "請輸入 6 位分享碼",
+    "queryError": "查詢失敗，請檢查網路後重試",
+    "codeLabel": "分享碼：",
+    "expiring": "即將過期",
+    "expiresInMinutes": "{n} 分鐘後過期",
+    "expiresInHours": "{h} 小時 {m} 分鐘後過期",
+    "download": "下載",
+    "remainingDownloads": "剩餘下載：{n} 次",
+    "receiveOtherFile": "接收其他檔案",
+    "receiveOtherContent": "接收其他內容",
+    "copied": "已複製 ✓",
+    "copy": "一鍵複製"
+  },
+  "admin": {
+    "title": "管理面板",
+    "passwordPlaceholder": "請輸入管理員密碼",
+    "loggingIn": "登入中...",
+    "login": "登入",
+    "loginFailed": "登入失敗",
+    "networkError": "網路異常，請檢查連線",
+    "logout": "登出",
+    "refresh": "重新整理",
+    "activeTransfers": "活躍傳輸（{n}）",
+    "noActiveTransfers": "暫無活躍傳輸",
+    "totalSize": "總大小：",
+    "downloads": "下載：",
+    "created": "建立：",
+    "expires": "過期：",
+    "terminate": "強制終止"
+  },
+  "p2p": {
+    "idle": "等待連線",
+    "connecting": "正在連線...",
+    "signaling": "信令交換中...",
+    "connected": "P2P 已連線",
+    "transferring": "P2P 傳輸中...",
+    "fallback": "已切換至伺服器中轉",
+    "error": "P2P 錯誤",
+    "fallbackButton": "切換至伺服器中轉",
+    "connectionFailed": "P2P 連線失敗，切換至伺服器中轉",
+    "sendFailed": "P2P 傳送失敗，切換至伺服器中轉"
+  }
+}

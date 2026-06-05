@@ -1,0 +1,92 @@
+{
+  "app": {
+    "title": "File Share",
+    "nav": {
+      "send": "Envoyer",
+      "receive": "Recevoir",
+      "language": "Langue"
+    },
+    "footer": {
+      "notice": "Les fichiers sont automatiquement supprimés après 1 heure · Transfert chiffré de bout en bout"
+    }
+  },
+  "send": {
+    "title": "File Share",
+    "subtitle": "Transfert de fichiers sécurisé, anonyme et instantané",
+    "tabFile": "Fichier",
+    "tabText": "Texte",
+    "dropZone": "Cliquez pour sélectionner des fichiers ou glissez-déposez ici",
+    "fileLimits": "Tout type de fichier, max 100MB par fichier, 500MB au total",
+    "textPlaceholder": "Collez ou saisissez le contenu texte ici (max 1MB)...",
+    "sending": "Envoi en cours...",
+    "sendText": "Envoyer le texte",
+    "networkError": "Erreur réseau, vérifiez votre connexion",
+    "uploadError": "Échec du téléversement, vérifiez votre réseau et réessayez",
+    "textCodeLabel": "Code de partage texte",
+    "shareCodeLabel": "Code de partage",
+    "copied": "Copié ✓",
+    "copy": "Copier",
+    "sendFailed": "Envoi échoué",
+    "sendNewContent": "Envoyer un nouveau contenu",
+    "sendNewFile": "Envoyer un nouveau fichier",
+    "qrAlt": "Code QR",
+    "validation": {
+      "selectFile": "Veuillez sélectionner au moins un fichier",
+      "maxFiles": "Maximum {max} fichiers",
+      "zeroSize": "Le fichier \"{name}\" est vide",
+      "fileTooBig": "Le fichier \"{name}\" dépasse la limite de {limit}MB",
+      "totalTooBig": "La taille totale dépasse la limite de {limit}MB",
+      "textEmpty": "Veuillez saisir le contenu texte à partager",
+      "textTooLong": "Texte trop long ({size}MB), limite de 1MB, utilisez le transfert de fichiers"
+    }
+  },
+  "receive": {
+    "title": "Recevoir",
+    "tabFile": "Fichier",
+    "tabText": "Texte",
+    "codePlaceholder": "Saisissez le code de partage à 6 chiffres",
+    "searching": "Recherche...",
+    "receive": "Recevoir",
+    "invalidCode": "Veuillez saisir un code de partage à 6 chiffres",
+    "queryError": "Échec de la recherche, vérifiez votre réseau et réessayez",
+    "codeLabel": "Code de partage :",
+    "expiring": "Expire bientôt",
+    "expiresInMinutes": "Expire dans {n} minutes",
+    "expiresInHours": "Expire dans {h} heures {m} minutes",
+    "download": "Télécharger",
+    "remainingDownloads": "Téléchargements restants : {n}",
+    "receiveOtherFile": "Recevoir d'autres fichiers",
+    "receiveOtherContent": "Recevoir d'autre contenu",
+    "copied": "Copié ✓",
+    "copy": "Copier"
+  },
+  "admin": {
+    "title": "Panneau d'administration",
+    "passwordPlaceholder": "Saisissez le mot de passe administrateur",
+    "loggingIn": "Connexion...",
+    "login": "Connexion",
+    "loginFailed": "Échec de la connexion",
+    "networkError": "Erreur réseau, vérifiez votre connexion",
+    "logout": "Déconnexion",
+    "refresh": "Actualiser",
+    "activeTransfers": "Transferts actifs ({n})",
+    "noActiveTransfers": "Aucun transfert actif",
+    "totalSize": "Taille totale :",
+    "downloads": "Téléchargements :",
+    "created": "Créé :",
+    "expires": "Expire :",
+    "terminate": "Forcer l'arrêt"
+  },
+  "p2p": {
+    "idle": "En attente de connexion",
+    "connecting": "Connexion en cours...",
+    "signaling": "Signalisation...",
+    "connected": "P2P connecté",
+    "transferring": "Transfert P2P...",
+    "fallback": "Basculé vers le relais serveur",
+    "error": "Erreur P2P",
+    "fallbackButton": "Basculer vers le relais serveur",
+    "connectionFailed": "Échec de la connexion P2P, basculement vers le relais serveur",
+    "sendFailed": "Échec de l'envoi P2P, basculement vers le relais serveur"
+  }
+}

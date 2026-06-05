@@ -1,0 +1,92 @@
+{
+  "app": {
+    "title": "File Share",
+    "nav": {
+      "send": "Send",
+      "receive": "Receive",
+      "language": "Language"
+    },
+    "footer": {
+      "notice": "Files are automatically deleted after 1 hour · End-to-end encrypted transfer"
+    }
+  },
+  "send": {
+    "title": "File Share",
+    "subtitle": "Secure, anonymous, instant file transfer",
+    "tabFile": "File",
+    "tabText": "Text",
+    "dropZone": "Click to select files or drag and drop here",
+    "fileLimits": "Any file type, max 100MB per file, 500MB total",
+    "textPlaceholder": "Paste or type text content here (max 1MB)...",
+    "sending": "Sending...",
+    "sendText": "Send Text",
+    "networkError": "Network error, please check your connection",
+    "uploadError": "Upload failed, please check your network and try again",
+    "textCodeLabel": "Text Share Code",
+    "shareCodeLabel": "Share Code",
+    "copied": "Copied ✓",
+    "copy": "Copy",
+    "sendFailed": "Send failed",
+    "sendNewContent": "Send New Content",
+    "sendNewFile": "Send New File",
+    "qrAlt": "QR Code",
+    "validation": {
+      "selectFile": "Please select at least one file",
+      "maxFiles": "Maximum {max} files",
+      "zeroSize": "File \"{name}\" is empty",
+      "fileTooBig": "File \"{name}\" exceeds {limit}MB limit",
+      "totalTooBig": "Total file size exceeds {limit}MB limit",
+      "textEmpty": "Please enter text content to share",
+      "textTooLong": "Text too long ({size}MB), limit is 1MB, please use file transfer instead"
+    }
+  },
+  "receive": {
+    "title": "Receive",
+    "tabFile": "File",
+    "tabText": "Text",
+    "codePlaceholder": "Enter 6-digit share code",
+    "searching": "Searching...",
+    "receive": "Receive",
+    "invalidCode": "Please enter a 6-digit share code",
+    "queryError": "Query failed, please check your network and try again",
+    "codeLabel": "Share Code:",
+    "expiring": "Expiring soon",
+    "expiresInMinutes": "Expires in {n} minutes",
+    "expiresInHours": "Expires in {h} hours {m} minutes",
+    "download": "Download",
+    "remainingDownloads": "Remaining downloads: {n}",
+    "receiveOtherFile": "Receive Other Files",
+    "receiveOtherContent": "Receive Other Content",
+    "copied": "Copied ✓",
+    "copy": "Copy"
+  },
+  "admin": {
+    "title": "Admin Panel",
+    "passwordPlaceholder": "Enter admin password",
+    "loggingIn": "Logging in...",
+    "login": "Login",
+    "loginFailed": "Login failed",
+    "networkError": "Network error, please check your connection",
+    "logout": "Logout",
+    "refresh": "Refresh",
+    "activeTransfers": "Active Transfers ({n})",
+    "noActiveTransfers": "No active transfers",
+    "totalSize": "Total size:",
+    "downloads": "Downloads:",
+    "created": "Created:",
+    "expires": "Expires:",
+    "terminate": "Force Terminate"
+  },
+  "p2p": {
+    "idle": "Waiting for connection",
+    "connecting": "Connecting...",
+    "signaling": "Signaling...",
+    "connected": "P2P Connected",
+    "transferring": "P2P Transferring...",
+    "fallback": "Switched to server relay",
+    "error": "P2P Error",
+    "fallbackButton": "Switch to Server Relay",
+    "connectionFailed": "P2P connection failed, switching to server relay",
+    "sendFailed": "P2P send failed, switching to server relay"
+  }
+}
