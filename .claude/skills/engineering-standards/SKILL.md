@@ -114,3 +114,18 @@ pnpm lint                # ESLint + Oxlint
 pnpm typecheck           # TypeScript 类型检查
 pnpm format              # Prettier 格式化
 ```
+
+### 添加 shadcn-vue UI 组件
+
+**必须使用 CLI 创建**，不要手写 UI 组件文件：
+
+```sh
+cd packages/web
+npx shadcn-vue@latest add <component-name>
+```
+
+CLI 会自动完成：安装依赖 → 创建组件文件 → 更新 CSS 变量。组件放在 `src/components/ui/<component-name>/` 下。
+
+常用组件：`input-otp` `dialog` `select` `dropdown-menu` `tabs` `progress` `textarea` `badge` `card` `button` `input`
+
+需要某个组件但不确定是否存在时，先运行上述命令尝试安装。
