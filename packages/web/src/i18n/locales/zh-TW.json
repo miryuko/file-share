@@ -48,8 +48,6 @@
   },
   "receive": {
     "title": "接收",
-    "tabFile": "檔案",
-    "tabText": "文字",
     "codePlaceholder": "輸入 6 位分享碼",
     "searching": "查詢中...",
     "receive": "接收",

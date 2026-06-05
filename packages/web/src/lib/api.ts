@@ -98,4 +98,30 @@ export function getDownloadUrl(code: string, fileId: string): string {
   return `${BASE_URL}/api/download/${code}/${fileId}`;
 }
 
+// ── 统一分享码查询 ──
+
+/** 统一分享码查询响应：文件类型 */
+export interface CodeFileData {
+  type: "file";
+  code: string;
+  files: { fileId: string; filename: string; size: number; contentType: string }[];
+  expiresAt: number;
+  remainingDownloads: number;
+}
+
+/** 统一分享码查询响应：文本类型 */
+export interface CodeTextData {
+  type: "text";
+  content: string;
+  expiresAt: number;
+  createdAt: number;
+}
+
+export type CodeData = CodeFileData | CodeTextData;
+
+/** 统一查询分享码（自动识别文件/文本类型） */
+export async function getCodeInfo(code: string): Promise<CodeData> {
+  return request<CodeData>(`/api/code/${code}`);
+}
+
 export { ApiError };

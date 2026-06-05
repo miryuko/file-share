@@ -48,8 +48,6 @@
   },
   "receive": {
     "title": "Получить",
-    "tabFile": "Файл",
-    "tabText": "Текст",
     "codePlaceholder": "Введите 6-значный код",
     "searching": "Поиск...",
     "receive": "Получить",

@@ -48,8 +48,6 @@
   },
   "receive": {
     "title": "استلام",
-    "tabFile": "ملف",
-    "tabText": "نص",
     "codePlaceholder": "أدخل رمز المشاركة المكون من 6 أرقام",
     "searching": "جاري البحث...",
     "receive": "استلام",

@@ -48,8 +48,6 @@
   },
   "receive": {
     "title": "受信",
-    "tabFile": "ファイル",
-    "tabText": "テキスト",
     "codePlaceholder": "6桁の共有コードを入力",
     "searching": "検索中...",
     "receive": "受信",

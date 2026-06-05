@@ -48,8 +48,6 @@
   },
   "receive": {
     "title": "Recibir",
-    "tabFile": "Archivo",
-    "tabText": "Texto",
     "codePlaceholder": "Ingrese el código de 6 dígitos",
     "searching": "Buscando...",
     "receive": "Recibir",

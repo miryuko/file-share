@@ -1,16 +1,15 @@
 <script setup lang="ts">
-import { ref } from "vue";
+import { ref, watch, onMounted } from "vue";
+import { useRoute } from "vue-router";
 import { useI18n } from "vue-i18n";
-import { getSession, getDownloadUrl, ApiError } from "../lib/api";
+import { getCodeInfo, getDownloadUrl, ApiError } from "../lib/api";
 import P2PTransfer from "../components/P2PTransfer.vue";
 import { Button } from "../components/ui/button";
-import { Input } from "../components/ui/input";
 import { Card, CardContent } from "../components/ui/card";
-import { Tabs, TabsList, TabsTrigger } from "../components/ui/tabs";
+import { InputOTP, InputOTPGroup, InputOTPSlot } from "../components/ui/input-otp";
 
 const { t } = useI18n();
-
-type ReceiveMode = "file" | "text";
+const route = useRoute();
 
 interface FileInfo {
   fileId: string;
@@ -19,7 +18,6 @@ interface FileInfo {
   contentType: string;
 }
 
-const receiveMode = ref<ReceiveMode>("file");
 const codeInput = ref("");
 const isLoading = ref(false);
 const errorMessage = ref("");
@@ -34,10 +32,17 @@ const textResult = ref<{ content: string; expiresAt: number } | null>(null);
 const textCopied = ref(false);
 const encoder = new TextEncoder();
 
-function onCodeInput(event: Event): void {
-  const input = event.target as HTMLInputElement;
-  input.value = input.value.toUpperCase().replace(/[^A-HJ-NP-Z2-9]/g, "");
-  codeInput.value = input.value;
+// 自动过滤和转大写
+watch(codeInput, (val) => {
+  const filtered = val.toUpperCase().replace(/[^A-HJ-NP-Z2-9]/g, "");
+  if (filtered !== val) {
+    codeInput.value = filtered;
+  }
+});
+
+// OTP 输入完成时自动查询
+function onOtpComplete(): void {
+  handleReceive();
 }
 
 async function handleReceive(): Promise<void> {
@@ -53,15 +58,20 @@ async function handleReceive(): Promise<void> {
   textResult.value = null;
 
   try {
-    if (receiveMode.value === "text") {
-      const res = await fetch(`/api/text/${code}`);
-      if (!res.ok) {
-        const body = (await res.json()) as { message: string };
-        throw new ApiError(body.message, res.status, body.message);
-      }
-      textResult.value = (await res.json()) as { content: string; expiresAt: number };
+    const result = await getCodeInfo(code);
+
+    if (result.type === "file") {
+      session.value = {
+        code: result.code,
+        files: result.files,
+        expiresAt: result.expiresAt,
+        remainingDownloads: result.remainingDownloads,
+      };
     } else {
-      session.value = await getSession(code);
+      textResult.value = {
+        content: result.content,
+        expiresAt: result.expiresAt,
+      };
     }
   } catch (err) {
     if (err instanceof ApiError) {
@@ -113,39 +123,50 @@ function reset(): void {
   codeInput.value = "";
   errorMessage.value = "";
 }
+
+// 支持从 URL 路由 /receive/:code 自动查询
+onMounted(() => {
+  const routeCode = route.params.code as string | undefined;
+  if (routeCode && routeCode.length === 6) {
+    codeInput.value = routeCode.toUpperCase();
+    handleReceive();
+  }
+});
+
+// 暴露 codeInput 以便测试直接设置值
+defineExpose({ codeInput });
 </script>
 
 <template>
   <div class="mx-auto max-w-[480px] px-4 py-8">
     <h1 class="mb-6 text-center text-2xl font-bold">{{ $t('receive.title') }}</h1>
 
-    <!-- 模式切换 -->
-    <Tabs v-if="!session && !textResult" v-model="receiveMode" class="mb-6">
-      <TabsList class="grid w-full grid-cols-2">
-        <TabsTrigger value="file">{{ $t('receive.tabFile') }}</TabsTrigger>
-        <TabsTrigger value="text">{{ $t('receive.tabText') }}</TabsTrigger>
-      </TabsList>
-    </Tabs>
+    <!-- 输入分享码（OTP 输入，自动识别类型） -->
+    <div v-if="!session && !textResult" class="space-y-6">
+      <InputOTP
+        v-model="codeInput"
+        :maxlength="6"
+        :disabled="isLoading"
+        @complete="onOtpComplete"
+      >
+        <InputOTPGroup class="mx-auto">
+          <InputOTPSlot
+            v-for="i in 6"
+            :key="i"
+            :index="i - 1"
+            class="h-14 w-12 font-mono text-2xl font-semibold"
+          />
+        </InputOTPGroup>
+      </InputOTP>
 
-    <!-- 输入分享码 -->
-    <div v-if="!session && !textResult" class="space-y-4">
-      <div class="flex gap-3">
-        <Input
-          v-model="codeInput"
-          maxlength="6"
-          :placeholder="$t('receive.codePlaceholder')"
-          autocomplete="off"
-          class="flex-1 text-center font-mono text-2xl tracking-[0.3em] uppercase"
-          @input="onCodeInput"
-          @keyup.enter="handleReceive"
-        />
+      <div class="flex justify-center">
         <Button :disabled="codeInput.length !== 6 || isLoading" @click="handleReceive">
           {{ isLoading ? $t('receive.searching') : $t('receive.receive') }}
         </Button>
       </div>
       <div
         v-if="errorMessage"
-        class="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600"
+        class="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600 dark:border-red-800 dark:bg-red-950 dark:text-red-400"
       >
         {{ errorMessage }}
       </div>

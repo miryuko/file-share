@@ -48,8 +48,6 @@
   },
   "receive": {
     "title": "받기",
-    "tabFile": "파일",
-    "tabText": "텍스트",
     "codePlaceholder": "6자리 공유 코드 입력",
     "searching": "검색 중...",
     "receive": "받기",

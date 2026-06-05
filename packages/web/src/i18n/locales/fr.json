@@ -48,8 +48,6 @@
   },
   "receive": {
     "title": "Recevoir",
-    "tabFile": "Fichier",
-    "tabText": "Texte",
     "codePlaceholder": "Saisissez le code de partage à 6 chiffres",
     "searching": "Recherche...",
     "receive": "Recevoir",
