@@ -4,10 +4,6 @@
 
 const BASE_URL = import.meta.env.VITE_API_BASE || "";
 
-interface CreateSessionRequest {
-  files: { filename: string; size: number; contentType?: string }[];
-}
-
 interface CreateSessionResponse {
   code: string;
   files: { fileId: string; filename: string; uploadUrl: string }[];

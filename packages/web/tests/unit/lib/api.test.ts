@@ -1,7 +1,7 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { describe, it, expect, vi, beforeEach } from "vitest";
 
 // Mock fetch globally
-const mockFetch = vi.fn();
+const mockFetch = vi.fn<typeof fetch>();
 vi.stubGlobal("fetch", mockFetch);
 
 // Re-import after mock is set
