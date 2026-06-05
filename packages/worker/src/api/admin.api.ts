@@ -13,7 +13,7 @@ const app = new Hono<{ Bindings: CloudflareBindings }>();
 
 /** 从环境获取 JWT secret */
 function getSecret(env: CloudflareBindings): string {
-  return (env as unknown as Record<string, string>).ADMIN_JWT_SECRET || "file-share-admin-secret-change-me";
+  return env.ADMIN_JWT_SECRET || "file-share-admin-secret-change-me";
 }
 
 /** 验证管理员认证，失败时抛出 AppError(401) */

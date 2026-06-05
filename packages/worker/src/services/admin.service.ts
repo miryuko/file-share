@@ -2,41 +2,63 @@ import type { AdminConfig, Session } from "../models/session";
 import { DEFAULT_ADMIN_CONFIG } from "../models/session";
 import { AppError } from "../utils/error";
 import { signJwt } from "../utils/jwt";
+import { hashPassword, verifyPassword } from "../utils/password";
+
+const MAX_LOGIN_ATTEMPTS = 5;
+const LOGIN_LOCKOUT_SECONDS = 300; // 5 分钟
 
 /**
  * 管理员登录
  *
  * 验证密码，签发 JWT token（有效期 24 小时）。
+ * 首次访问时用默认密码 admin123 初始化（哈希存储）。
+ * 5 次失败后锁定 5 分钟。
  *
  * @throws {AppError} INVALID_PASSWORD — 密码错误
+ * @throws {AppError} ACCOUNT_LOCKED — 登录尝试超限
  */
 export async function adminLogin(
   password: string,
   env: { FILE_KV: KVNamespace },
   secret: string,
 ): Promise<{ token: string }> {
-  const storedHash = await env.FILE_KV.get("admin:password");
-
-  if (!storedHash) {
-    // 首次使用：设置默认密码
-    if (password === "admin123") {
-      await env.FILE_KV.put("admin:password", password);
-    } else {
+  // 检查锁定状态
+  const lockKey = "admin:login_lock";
+  const lockData = await env.FILE_KV.get(lockKey);
+  if (lockData) {
+    const { attempts, lockedUntil } = JSON.parse(lockData);
+    if (Date.now() < lockedUntil) {
+      const remainingMin = Math.ceil((lockedUntil - Date.now()) / 60000);
       throw new AppError(
-        "INVALID_PASSWORD",
-        401,
-        "密码错误，请重试",
+        "ACCOUNT_LOCKED",
+        429,
+        `登录尝试过多，请 ${remainingMin} 分钟后重试`,
       );
     }
   }
 
-  if (password !== storedHash) {
-    throw new AppError(
-      "INVALID_PASSWORD",
-      401,
-      "密码错误，请重试",
-    );
+  const storedHash = await env.FILE_KV.get("admin:password");
+
+  if (!storedHash) {
+    // 首次使用：哈希存储默认密码
+    if (password === "admin123") {
+      const hashed = await hashPassword(password);
+      await env.FILE_KV.put("admin:password", hashed);
+    } else {
+      await recordFailedAttempt(env);
+      throw new AppError("INVALID_PASSWORD", 401, "密码错误，请重试");
+    }
+    // 首次设置成功，继续签发 token
+  } else {
+    const isValid = await verifyPassword(password, storedHash);
+    if (!isValid) {
+      await recordFailedAttempt(env);
+      throw new AppError("INVALID_PASSWORD", 401, "密码错误，请重试");
+    }
   }
+
+  // 清除锁定记录
+  await env.FILE_KV.delete("admin:login_lock");
 
   const now = Math.floor(Date.now() / 1000);
   const token = await signJwt(
@@ -53,6 +75,37 @@ export async function adminLogin(
   }));
 
   return { token };
+}
+
+/**
+ * 记录失败的登录尝试
+ */
+async function recordFailedAttempt(env: { FILE_KV: KVNamespace }): Promise<void> {
+  const lockKey = "admin:login_lock";
+  const raw = await env.FILE_KV.get(lockKey);
+  let attempts = 1;
+  let lockedUntil = 0;
+
+  if (raw) {
+    const data = JSON.parse(raw);
+    attempts = data.attempts + 1;
+  }
+
+  if (attempts >= MAX_LOGIN_ATTEMPTS) {
+    lockedUntil = Date.now() + LOGIN_LOCKOUT_SECONDS * 1000;
+  }
+
+  await env.FILE_KV.put(
+    lockKey,
+    JSON.stringify({ attempts, lockedUntil }),
+    { expirationTtl: LOGIN_LOCKOUT_SECONDS },
+  );
+
+  console.warn(JSON.stringify({
+    event: "admin.login_failed",
+    attempts,
+    locked: attempts >= MAX_LOGIN_ATTEMPTS,
+  }));
 }
 
 /**

@@ -14,6 +14,7 @@ interface CleanupStats {
   scanned: number;
   expired: number;
   r2FilesDeleted: number;
+  textEntriesDeleted: number;
   errors: number;
 }
 
@@ -31,16 +32,17 @@ export async function runCleanup(env: {
     scanned: 0,
     expired: 0,
     r2FilesDeleted: 0,
+    textEntriesDeleted: 0,
     errors: 0,
   };
 
   const now = Date.now();
 
+  // 1. 清理过期的文件 session
   try {
-    // 列出所有活跃 session
-    const list = await env.FILE_KV.list({ prefix: "code:" });
+    const fileList = await env.FILE_KV.list({ prefix: "code:" });
 
-    for (const key of list.keys) {
+    for (const key of fileList.keys) {
       stats.scanned++;
 
       try {
@@ -49,9 +51,7 @@ export async function runCleanup(env: {
 
         const session = JSON.parse(raw);
 
-        // 检查是否过期
         if (session.expiresAt && now > session.expiresAt) {
-          // 删除 R2 文件
           if (session.files) {
             for (const file of session.files) {
               try {
@@ -71,7 +71,6 @@ export async function runCleanup(env: {
             }
           }
 
-          // 删除 KV 键
           await env.FILE_KV.delete(key.name);
           stats.expired++;
         }
@@ -86,7 +85,41 @@ export async function runCleanup(env: {
     }
   } catch (err) {
     console.error(JSON.stringify({
-      event: "cleanup.list.failed",
+      event: "cleanup.file_list.failed",
+      error: String(err),
+    }));
+    stats.errors++;
+  }
+
+  // 2. 清理过期的文本条目
+  try {
+    const textList = await env.FILE_KV.list({ prefix: "text:" });
+
+    for (const key of textList.keys) {
+      stats.scanned++;
+
+      try {
+        const raw = await env.FILE_KV.get(key.name);
+        if (!raw) continue;
+
+        const entry = JSON.parse(raw);
+
+        if (entry.expiresAt && now > entry.expiresAt) {
+          await env.FILE_KV.delete(key.name);
+          stats.textEntriesDeleted++;
+        }
+      } catch (err) {
+        stats.errors++;
+        console.error(JSON.stringify({
+          event: "cleanup.text.failed",
+          key: key.name,
+          error: String(err),
+        }));
+      }
+    }
+  } catch (err) {
+    console.error(JSON.stringify({
+      event: "cleanup.text_list.failed",
       error: String(err),
     }));
     stats.errors++;

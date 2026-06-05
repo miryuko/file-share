@@ -9,6 +9,7 @@ import sessionApi from "./api/session.api";
 import uploadApi from "./api/upload.api";
 import downloadApi from "./api/download.api";
 import adminApi from "./api/admin.api";
+import textApi from "./api/text.api";
 
 const app = new Hono<{ Bindings: CloudflareBindings }>();
 
@@ -26,6 +27,7 @@ app.route("/", sessionApi);
 app.route("/", uploadApi);
 app.route("/", downloadApi);
 app.route("/", adminApi);
+app.route("/", textApi);
 
 // ── 健康检查 ──
 app.get("/api/health", (c) => {
