@@ -6,6 +6,12 @@
       "receive": "Recevoir",
       "language": "Langue"
     },
+    "theme": {
+      "toggle": "Changer le thème",
+      "light": "Clair",
+      "dark": "Sombre",
+      "system": "Système"
+    },
     "footer": {
       "notice": "Les fichiers sont automatiquement supprimés après 1 heure · Transfert chiffré de bout en bout"
     }

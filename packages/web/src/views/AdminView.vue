@@ -278,7 +278,7 @@ function statusBadgeClass(status: string): string {
     case "uploading": return "bg-amber-100 text-amber-800 border-amber-200";
     case "ready": return "bg-green-100 text-green-800 border-green-200";
     case "downloading": return "bg-blue-100 text-blue-800 border-blue-200";
-    default: return "bg-gray-100 text-gray-600";
+    default: return "bg-muted text-muted-foreground";
   }
 }
 
@@ -345,22 +345,22 @@ onMounted(() => {
         <TabsContent value="sessions">
           <section>
             <h2 class="mb-4 text-lg font-semibold">{{ $t('admin.activeTransfers', { n: sessions.length }) }}</h2>
-            <p v-if="sessions.length === 0" class="italic text-gray-400">{{ $t('admin.noActiveTransfers') }}</p>
+            <p v-if="sessions.length === 0" class="italic text-muted-foreground">{{ $t('admin.noActiveTransfers') }}</p>
             <Card v-for="s in sessions" :key="s.code" class="mb-3">
               <CardHeader class="pb-0">
                 <div class="flex items-center gap-3">
                   <span class="font-mono text-lg font-bold">{{ s.code }}</span>
                   <Badge variant="outline" :class="statusBadgeClass(s.status)">{{ s.status }}</Badge>
-                  <span class="ml-auto text-xs text-gray-400">{{ s.creatorIP }}</span>
+                  <span class="ml-auto text-xs text-muted-foreground">{{ s.creatorIP }}</span>
                 </div>
               </CardHeader>
               <CardContent class="pt-3">
                 <div class="mb-2">
-                  <p v-for="f in s.files" :key="f.fileId" class="text-sm text-gray-600">
+                  <p v-for="f in s.files" :key="f.fileId" class="text-sm text-muted-foreground">
                     {{ f.filename }} ({{ formatSize(f.size) }})
                   </p>
                 </div>
-                <div class="mb-3 flex flex-wrap gap-4 text-xs text-gray-400">
+                <div class="mb-3 flex flex-wrap gap-4 text-xs text-muted-foreground">
                   <span>{{ $t('admin.totalSize') }} {{ formatSize(s.totalSize) }}</span>
                   <span>{{ $t('admin.downloads') }} {{ s.downloadCount }}/{{ s.maxDownloads }}</span>
                   <span>{{ $t('admin.created') }} {{ formatTime(s.createdAt) }}</span>
@@ -388,18 +388,18 @@ onMounted(() => {
             <CardContent class="space-y-5">
               <!-- 站点外观 -->
               <fieldset>
-                <legend class="mb-3 text-sm font-semibold text-gray-700">{{ $t('admin.appearanceSection') }}</legend>
+                <legend class="mb-3 text-sm font-semibold text-foreground">{{ $t('admin.appearanceSection') }}</legend>
                 <div class="space-y-3">
                   <div>
-                    <label class="mb-1 block text-sm text-gray-600">{{ $t('admin.siteTitle') }}</label>
+                    <label class="mb-1 block text-sm text-muted-foreground">{{ $t('admin.siteTitle') }}</label>
                     <Input v-model="config.siteTitle" :placeholder="$t('admin.siteTitlePlaceholder')" />
                   </div>
                   <div>
-                    <label class="mb-1 block text-sm text-gray-600">{{ $t('admin.siteDescription') }}</label>
+                    <label class="mb-1 block text-sm text-muted-foreground">{{ $t('admin.siteDescription') }}</label>
                     <Input v-model="config.siteDescription" :placeholder="$t('admin.siteDescriptionPlaceholder')" />
                   </div>
                   <div>
-                    <label class="mb-1 block text-sm text-gray-600">{{ $t('admin.footerNotice') }}</label>
+                    <label class="mb-1 block text-sm text-muted-foreground">{{ $t('admin.footerNotice') }}</label>
                     <Textarea v-model="config.footerNotice" :placeholder="$t('admin.footerNoticePlaceholder')" class="min-h-16" />
                   </div>
                 </div>
@@ -407,10 +407,10 @@ onMounted(() => {
 
               <!-- 上传限制 -->
               <fieldset>
-                <legend class="mb-3 text-sm font-semibold text-gray-700">{{ $t('admin.uploadSection') }}</legend>
+                <legend class="mb-3 text-sm font-semibold text-foreground">{{ $t('admin.uploadSection') }}</legend>
                 <div class="grid grid-cols-2 gap-3">
                   <div>
-                    <label class="mb-1 block text-sm text-gray-600">{{ $t('admin.maxFileSizeMB') }}</label>
+                    <label class="mb-1 block text-sm text-muted-foreground">{{ $t('admin.maxFileSizeMB') }}</label>
                     <Input
                       type="number"
                       :model-value="toMB(config.maxFileSize)"
@@ -419,7 +419,7 @@ onMounted(() => {
                     />
                   </div>
                   <div>
-                    <label class="mb-1 block text-sm text-gray-600">{{ $t('admin.maxTotalSizeMB') }}</label>
+                    <label class="mb-1 block text-sm text-muted-foreground">{{ $t('admin.maxTotalSizeMB') }}</label>
                     <Input
                       type="number"
                       :model-value="toMB(config.maxTotalSize)"
@@ -428,15 +428,15 @@ onMounted(() => {
                     />
                   </div>
                   <div>
-                    <label class="mb-1 block text-sm text-gray-600">{{ $t('admin.maxFiles') }}</label>
+                    <label class="mb-1 block text-sm text-muted-foreground">{{ $t('admin.maxFiles') }}</label>
                     <Input v-model.number="config.maxFiles" type="number" min="1" />
                   </div>
                   <div>
-                    <label class="mb-1 block text-sm text-gray-600">{{ $t('admin.maxDownloadsCfg') }}</label>
+                    <label class="mb-1 block text-sm text-muted-foreground">{{ $t('admin.maxDownloadsCfg') }}</label>
                     <Input v-model.number="config.maxDownloads" type="number" min="1" />
                   </div>
                   <div>
-                    <label class="mb-1 block text-sm text-gray-600">{{ $t('admin.ttlMinutes') }}</label>
+                    <label class="mb-1 block text-sm text-muted-foreground">{{ $t('admin.ttlMinutes') }}</label>
                     <Input
                       type="number"
                       :model-value="toMinutes(config.ttlSeconds)"
@@ -445,7 +445,7 @@ onMounted(() => {
                     />
                   </div>
                   <div>
-                    <label class="mb-1 block text-sm text-gray-600">{{ $t('admin.rateLimitPerMinute') }}</label>
+                    <label class="mb-1 block text-sm text-muted-foreground">{{ $t('admin.rateLimitPerMinute') }}</label>
                     <Input v-model.number="config.rateLimitPerMinute" type="number" min="1" />
                   </div>
                 </div>
@@ -453,9 +453,9 @@ onMounted(() => {
 
               <!-- 文本限制 -->
               <fieldset>
-                <legend class="mb-3 text-sm font-semibold text-gray-700">{{ $t('admin.textSection') }}</legend>
+                <legend class="mb-3 text-sm font-semibold text-foreground">{{ $t('admin.textSection') }}</legend>
                 <div>
-                  <label class="mb-1 block text-sm text-gray-600">{{ $t('admin.maxTextSizeMB') }}</label>
+                  <label class="mb-1 block text-sm text-muted-foreground">{{ $t('admin.maxTextSizeMB') }}</label>
                   <Input
                     type="number"
                     :model-value="toMB(config.maxTextSize)"
@@ -493,18 +493,18 @@ onMounted(() => {
 
               <!-- 修改密码表单 -->
               <fieldset>
-                <legend class="mb-3 text-sm font-semibold text-gray-700">{{ $t('admin.changePassword') }}</legend>
+                <legend class="mb-3 text-sm font-semibold text-foreground">{{ $t('admin.changePassword') }}</legend>
                 <div class="space-y-3 max-w-[360px]">
                   <div>
-                    <label class="mb-1 block text-sm text-gray-600">{{ $t('admin.currentPassword') }}</label>
+                    <label class="mb-1 block text-sm text-muted-foreground">{{ $t('admin.currentPassword') }}</label>
                     <Input v-model="currentPassword" type="password" />
                   </div>
                   <div>
-                    <label class="mb-1 block text-sm text-gray-600">{{ $t('admin.newPassword') }}</label>
+                    <label class="mb-1 block text-sm text-muted-foreground">{{ $t('admin.newPassword') }}</label>
                     <Input v-model="newPassword" type="password" />
                   </div>
                   <div>
-                    <label class="mb-1 block text-sm text-gray-600">{{ $t('admin.confirmPassword') }}</label>
+                    <label class="mb-1 block text-sm text-muted-foreground">{{ $t('admin.confirmPassword') }}</label>
                     <Input v-model="confirmPassword" type="password" />
                   </div>
                 </div>

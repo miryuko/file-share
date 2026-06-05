@@ -77,7 +77,7 @@ function dotClass(): string {
 
 <template>
   <div v-if="isActive" class="mb-4 text-center">
-    <div class="flex items-center justify-center gap-2 rounded-lg border bg-gray-50 px-4 py-2 text-sm">
+    <div class="flex items-center justify-center gap-2 rounded-lg border bg-muted px-4 py-2 text-sm">
       <span class="inline-block h-2 w-2 rounded-full" :class="dotClass()" />
       <span>{{ getStatusText(status) }}</span>
     </div>

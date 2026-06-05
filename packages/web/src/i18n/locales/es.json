@@ -6,6 +6,12 @@
       "receive": "Recibir",
       "language": "Idioma"
     },
+    "theme": {
+      "toggle": "Cambiar tema",
+      "light": "Claro",
+      "dark": "Oscuro",
+      "system": "Sistema"
+    },
     "footer": {
       "notice": "Los archivos se eliminan automáticamente después de 1 hora · Transferencia cifrada de extremo a extremo"
     }

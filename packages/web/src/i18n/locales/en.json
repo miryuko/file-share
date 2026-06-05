@@ -6,6 +6,12 @@
       "receive": "Receive",
       "language": "Language"
     },
+    "theme": {
+      "toggle": "Toggle theme",
+      "light": "Light",
+      "dark": "Dark",
+      "system": "System"
+    },
     "footer": {
       "notice": "Files are automatically deleted after 1 hour · End-to-end encrypted transfer"
     }

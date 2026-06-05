@@ -153,7 +153,7 @@ function reset(): void {
 
     <!-- 文件列表 -->
     <div v-if="session" class="text-center">
-      <div class="mb-6 flex flex-col gap-1 rounded-lg bg-sky-50 p-4 text-sm text-gray-600">
+      <div class="mb-6 flex flex-col gap-1 rounded-lg bg-muted p-4 text-sm text-foreground">
         <span>{{ $t('receive.codeLabel') }} <strong class="text-lg text-blue-800">{{ session.code }}</strong></span>
         <span>{{ formatExpiry(session.expiresAt) }}</span>
         <span>{{ $t('receive.remainingDownloads', { n: session.remainingDownloads }) }}</span>
@@ -170,7 +170,7 @@ function reset(): void {
           <CardContent class="flex items-center gap-3 p-4">
             <div class="min-w-0 flex-1">
               <p class="truncate font-medium">{{ file.filename }}</p>
-              <p class="text-xs text-gray-400">{{ formatSize(file.size) }}</p>
+              <p class="text-xs text-muted-foreground">{{ formatSize(file.size) }}</p>
             </div>
             <a :href="getDownloadUrl(session.code, file.fileId)" download>
               <Button variant="default" class="bg-green-600 hover:bg-green-700">{{ $t('receive.download') }}</Button>
@@ -191,7 +191,7 @@ function reset(): void {
           <pre class="whitespace-pre-wrap break-words text-sm leading-relaxed">{{ textResult.content }}</pre>
         </CardContent>
       </Card>
-      <div class="mb-4 flex justify-between text-xs text-gray-400">
+      <div class="mb-4 flex justify-between text-xs text-muted-foreground">
         <span>{{ formatExpiry(textResult.expiresAt) }}</span>
         <span>{{ encoder.encode(textResult.content).byteLength.toLocaleString() }} bytes</span>
       </div>

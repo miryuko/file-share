@@ -6,6 +6,12 @@
       "receive": "Receber",
       "language": "Idioma"
     },
+    "theme": {
+      "toggle": "Alternar tema",
+      "light": "Claro",
+      "dark": "Escuro",
+      "system": "Sistema"
+    },
     "footer": {
       "notice": "Arquivos são automaticamente excluídos após 1 hora · Transferência criptografada de ponta a ponta"
     }

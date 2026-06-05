@@ -6,6 +6,12 @@
       "receive": "接收",
       "language": "语言"
     },
+    "theme": {
+      "toggle": "切换主题",
+      "light": "浅色",
+      "dark": "深色",
+      "system": "跟随系统"
+    },
     "footer": {
       "notice": "文件在服务器保留 1 小时后自动删除 · 端到端加密传输"
     }

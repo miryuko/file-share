@@ -6,6 +6,12 @@
       "receive": "받기",
       "language": "언어"
     },
+    "theme": {
+      "toggle": "테마 전환",
+      "light": "라이트",
+      "dark": "다크",
+      "system": "시스템"
+    },
     "footer": {
       "notice": "파일은 1시간 후 자동 삭제됩니다 · 종단간 암호화 전송"
     }

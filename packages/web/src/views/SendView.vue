@@ -170,7 +170,7 @@ function formatSize(bytes: number): string {
 <template>
   <div class="mx-auto max-w-[480px] px-4 py-8">
     <h1 class="mb-1 text-center text-2xl font-bold">{{ $t('send.title') }}</h1>
-    <p class="mb-6 text-center text-sm text-gray-500">{{ $t('send.subtitle') }}</p>
+    <p class="mb-6 text-center text-sm text-muted-foreground">{{ $t('send.subtitle') }}</p>
 
     <!-- 模式切换 -->
     <Tabs v-if="!shareCode && !textCode" v-model="mode" class="mb-6">
@@ -181,21 +181,21 @@ function formatSize(bytes: number): string {
       <TabsContent value="file" class="mt-4">
         <!-- 文件上传区域 -->
         <div
-          class="cursor-pointer rounded-xl border-2 border-dashed border-gray-300 px-8 py-12 text-center transition-colors hover:border-blue-500 hover:bg-blue-50/50"
-          :class="{ 'border-blue-500 bg-blue-50/50': dragOver }"
+          class="cursor-pointer rounded-xl border-2 border-dashed border-border px-8 py-12 text-center transition-colors hover:border-primary hover:bg-accent/50"
+          :class="{ 'border-primary bg-accent/50': dragOver }"
           @dragover.prevent="dragOver = true"
           @dragleave.prevent="dragOver = false"
           @drop.prevent="onDrop"
           @click="fileInput?.click()"
         >
-          <svg class="mx-auto mb-4 text-gray-400" viewBox="0 0 24 24" width="48" height="48">
+          <svg class="mx-auto mb-4 text-muted-foreground" viewBox="0 0 24 24" width="48" height="48">
             <path
               fill="currentColor"
               d="M11 16V7.85l-2.6 2.6L7 9l5-5 5 5-1.4 1.45-2.6-2.6V16h-2Zm-4 4q-.825 0-1.413-.588T5 18v-3h2v3h12v-3h2v3q0 .825-.588 1.413T19 20H7Z"
             />
           </svg>
           <p class="mb-2 text-lg">{{ $t('send.dropZone') }}</p>
-          <p class="text-xs text-gray-400">{{ $t('send.fileLimits') }}</p>
+          <p class="text-xs text-muted-foreground">{{ $t('send.fileLimits') }}</p>
         </div>
         <input ref="fileInput" type="file" multiple class="hidden" @change="onFileChange" />
         <div
@@ -213,7 +213,7 @@ function formatSize(bytes: number): string {
           class="resize-y"
         />
         <div class="flex items-center justify-between">
-          <span class="text-xs text-gray-400">
+          <span class="text-xs text-muted-foreground">
             {{ encoder.encode(textContent).byteLength.toLocaleString() }} bytes
           </span>
           <Button :disabled="!textContent.trim() || textLoading" @click="handleTextSend">
@@ -231,21 +231,21 @@ function formatSize(bytes: number): string {
 
     <!-- 上传进度 -->
     <div v-if="isUploading" class="mt-4 space-y-4">
-      <div v-for="f in files" :key="f.fileId || f.file.name" class="rounded-lg bg-gray-50 p-3">
+      <div v-for="f in files" :key="f.fileId || f.file.name" class="rounded-lg bg-muted p-3">
         <div class="mb-2 flex justify-between text-sm">
           <span class="truncate">{{ f.file.name }}</span>
-          <span class="ml-2 flex-shrink-0 text-gray-400">{{ formatSize(f.file.size) }}</span>
+          <span class="ml-2 flex-shrink-0 text-muted-foreground">{{ formatSize(f.file.size) }}</span>
         </div>
         <Progress :model-value="f.progress" class="h-1.5" />
-        <span class="mt-1 inline-block text-xs text-gray-400">{{ f.progress }}%</span>
+        <span class="mt-1 inline-block text-xs text-muted-foreground">{{ f.progress }}%</span>
       </div>
     </div>
 
     <!-- 文本分享结果 -->
     <div v-if="textCode" class="text-center">
-      <Card class="mb-6 bg-sky-50">
+      <Card class="mb-6 bg-muted">
         <CardContent class="p-8 text-center">
-          <p class="mb-2 text-sm text-gray-500">{{ $t('send.textCodeLabel') }}</p>
+          <p class="mb-2 text-sm text-muted-foreground">{{ $t('send.textCodeLabel') }}</p>
           <p class="mb-4 font-mono text-4xl font-bold tracking-[0.3em] text-blue-800">{{ textCode }}</p>
           <img
             v-if="qrCodeURI"
@@ -265,9 +265,9 @@ function formatSize(bytes: number): string {
 
     <!-- 文件上传完成 -->
     <div v-if="shareCode && !isUploading" class="text-center">
-      <Card class="mb-6 bg-sky-50">
+      <Card class="mb-6 bg-muted">
         <CardContent class="p-8 text-center">
-          <p class="mb-2 text-sm text-gray-500">{{ $t('send.shareCodeLabel') }}</p>
+          <p class="mb-2 text-sm text-muted-foreground">{{ $t('send.shareCodeLabel') }}</p>
           <p class="mb-4 font-mono text-4xl font-bold tracking-[0.3em] text-blue-800">{{ shareCode }}</p>
           <img
             v-if="qrCodeURI"
@@ -294,10 +294,10 @@ function formatSize(bytes: number): string {
         <div
           v-for="f in files"
           :key="f.fileId || f.file.name"
-          class="flex items-center gap-2 border-b border-gray-100 py-2"
+          class="flex items-center gap-2 border-b border-border py-2"
         >
           <span class="flex-1 truncate">{{ f.file.name }}</span>
-          <span class="text-sm text-gray-400">{{ formatSize(f.file.size) }}</span>
+          <span class="text-sm text-muted-foreground">{{ formatSize(f.file.size) }}</span>
           <span v-if="f.status === 'completed'" class="font-bold text-green-600">✓</span>
           <span v-else-if="f.status === 'error'" class="font-bold text-red-600">✗</span>
         </div>

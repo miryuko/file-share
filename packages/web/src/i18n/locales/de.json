@@ -6,6 +6,12 @@
       "receive": "Empfangen",
       "language": "Sprache"
     },
+    "theme": {
+      "toggle": "Design umschalten",
+      "light": "Hell",
+      "dark": "Dunkel",
+      "system": "System"
+    },
     "footer": {
       "notice": "Dateien werden nach 1 Stunde automatisch gelöscht · Ende-zu-Ende-verschlüsselte Übertragung"
     }

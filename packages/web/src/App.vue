@@ -9,6 +9,7 @@ import {
   DropdownMenuLabel,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
+import ModeToggle from '@/components/ModeToggle.vue'
 
 const { locale } = useI18n()
 
@@ -46,21 +47,22 @@ function currentNativeName(): string {
       <nav class="mx-auto flex max-w-[480px] items-center">
         <RouterLink
           to="/"
-          class="border-b-2 border-transparent px-5 py-3 text-sm font-medium text-gray-500 no-underline transition-colors hover:text-gray-700 [&.router-link-exact-active]:border-blue-500 [&.router-link-exact-active]:text-blue-500"
+          class="border-b-2 border-transparent px-5 py-3 text-sm font-medium text-muted-foreground no-underline transition-colors hover:text-foreground [&.router-link-exact-active]:border-primary [&.router-link-exact-active]:text-primary"
         >
           {{ $t('app.nav.send') }}
         </RouterLink>
         <RouterLink
           to="/receive"
-          class="border-b-2 border-transparent px-5 py-3 text-sm font-medium text-gray-500 no-underline transition-colors hover:text-gray-700 [&.router-link-exact-active]:border-blue-500 [&.router-link-exact-active]:text-blue-500"
+          class="border-b-2 border-transparent px-5 py-3 text-sm font-medium text-muted-foreground no-underline transition-colors hover:text-foreground [&.router-link-exact-active]:border-primary [&.router-link-exact-active]:text-primary"
         >
           {{ $t('app.nav.receive') }}
         </RouterLink>
 
-        <!-- Language Switcher -->
-        <div class="ml-auto">
+        <!-- Theme Toggle + Language Switcher -->
+        <div class="ml-auto flex items-center gap-1">
+          <ModeToggle />
           <DropdownMenu>
-            <DropdownMenuTrigger class="inline-flex items-center gap-1 rounded-md px-2 py-1.5 text-sm text-gray-500 outline-none hover:bg-gray-100 focus:bg-gray-100">
+            <DropdownMenuTrigger class="inline-flex items-center gap-1 rounded-md px-2 py-1.5 text-sm text-muted-foreground outline-none hover:bg-accent focus:bg-accent">
               <Globe class="size-4" />
               <span class="hidden sm:inline">{{ currentNativeName() }}</span>
             </DropdownMenuTrigger>
@@ -84,7 +86,7 @@ function currentNativeName(): string {
       <RouterView />
     </main>
 
-    <footer class="border-t px-4 py-6 text-center text-xs text-gray-400">
+    <footer class="border-t px-4 py-6 text-center text-xs text-muted-foreground">
       <p>{{ $t('app.footer.notice') }}</p>
     </footer>
   </div>
