@@ -1,9 +1,15 @@
 <script setup lang="ts">
-import { ref } from "vue";
+import { ref, computed } from "vue";
 import { useFileUpload } from "../composables/useFileUpload";
 import { ApiError } from "../lib/api";
+import { generateQRCodeDataURI } from "../lib/qrcode";
 
 type ShareMode = "file" | "text";
+
+const qrCodeURI = computed(() => {
+  const code = shareCode.value || textCode.value;
+  return code ? generateQRCodeDataURI(code) : "";
+});
 
 const mode = ref<ShareMode>("file");
 
@@ -245,6 +251,7 @@ function formatSize(bytes: number): string {
       <div class="share-code-box">
         <p class="share-label">文本分享码</p>
         <p class="share-code">{{ textCode }}</p>
+        <img v-if="qrCodeURI" :src="qrCodeURI" alt="QR Code" class="qr-code" width="160" height="160" />
         <button class="btn btn-copy" @click="copyTextCode">
           {{ textCopied ? "已复制 ✓" : "一键复制" }}
         </button>
@@ -274,6 +281,7 @@ function formatSize(bytes: number): string {
       <div class="share-code-box">
         <p class="share-label">分享码</p>
         <p class="share-code">{{ shareCode }}</p>
+        <img v-if="qrCodeURI" :src="qrCodeURI" alt="QR Code" class="qr-code" width="160" height="160" />
         <button class="btn btn-copy" @click="copyCode">
           {{ copied ? "已复制 ✓" : "一键复制" }}
         </button>
@@ -523,6 +531,13 @@ function formatSize(bytes: number): string {
   font-size: 0.95rem;
   cursor: pointer;
   transition: background-color 0.2s;
+}
+
+.qr-code {
+  display: block;
+  margin: 1rem auto;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
 }
 
 .btn-copy {

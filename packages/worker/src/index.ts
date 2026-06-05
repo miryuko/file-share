@@ -17,8 +17,12 @@ const app = new Hono<{ Bindings: CloudflareBindings }>();
 // ── 全局中间件 ──
 app.use("*", logger());
 
-// ── 速率限制（仅对创建 session 接口） ──
+// ── 速率限制 ──
 app.use("/api/session/create", async (c, next) => {
+  const limiter = rateLimiter(c.env.FILE_KV, 10);
+  await limiter(c, next);
+});
+app.use("/api/text/create", async (c, next) => {
   const limiter = rateLimiter(c.env.FILE_KV, 10);
   await limiter(c, next);
 });
