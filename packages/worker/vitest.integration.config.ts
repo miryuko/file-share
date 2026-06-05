@@ -1,17 +1,18 @@
+import { cloudflareTest } from "@cloudflare/vitest-pool-workers";
 import { defineConfig } from "vitest/config";
 
 export default defineConfig({
+  plugins: [
+    cloudflareTest({
+      wrangler: { configPath: "./wrangler.jsonc" },
+      miniflare: {
+        kvNamespaces: ["FILE_KV"],
+        r2Buckets: ["FILE_BUCKET"],
+      },
+    }),
+  ],
   test: {
     include: ["tests/integration/**/*.test.ts"],
-    environment: "miniflare",
-    environmentOptions: {
-      bindings: {
-        FILE_BUCKET: { type: "r2" },
-        FILE_KV: { type: "kv" },
-      },
-      modules: true,
-      scriptPath: "./src/index.ts",
-    },
     testTimeout: 30_000,
   },
 });

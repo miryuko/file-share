@@ -40,7 +40,7 @@ class ApiError extends Error {
 }
 
 async function request<T>(url: string, options?: RequestInit): Promise<T> {
-  const res = await fetch(`${BASE_URL}${url}`, options);
+  const res = await fetch(`${BASE_URL}${url}`, options ?? {});
 
   if (!res.ok) {
     let body: ErrorResponse;
