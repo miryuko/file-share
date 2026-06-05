@@ -20,6 +20,11 @@ const router = createRouter({
       name: 'receive-code',
       component: () => import('../views/ReceiveView.vue'),
     },
+    {
+      path: '/admin',
+      name: 'admin',
+      component: () => import('../views/AdminView.vue'),
+    },
   ],
 })
 
