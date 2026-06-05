@@ -30,8 +30,8 @@ function detectLocale(): string {
   if (zhTraditional.has(navLang)) return 'zh-TW'
   if (navLang.startsWith('zh')) return 'zh-CN'
 
-  const prefix = navLang.split('-')[0]
-  return prefixMap[prefix] || 'en'
+  const prefix = navLang.split('-')[0] ?? ''
+  return prefixMap[prefix] ?? 'en'
 }
 
 const i18n = createI18n({

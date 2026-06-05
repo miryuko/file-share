@@ -32,8 +32,8 @@ describe("P2PTransfer", () => {
       },
     });
 
-    expect(wrapper.props("code")).toBe("A3K9M2");
-    expect(wrapper.props("role")).toBe("sender");
+    expect((wrapper.props() as Record<string, unknown>).code).toBe("A3K9M2");
+    expect((wrapper.props() as Record<string, unknown>).role).toBe("sender");
   });
 
   it("给定 receiver 角色，应接受 props", () => {
@@ -44,6 +44,6 @@ describe("P2PTransfer", () => {
       },
     });
 
-    expect(wrapper.props("role")).toBe("receiver");
+    expect((wrapper.props() as Record<string, unknown>).role).toBe("receiver");
   });
 });

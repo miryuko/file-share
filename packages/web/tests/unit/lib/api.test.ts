@@ -114,11 +114,9 @@ describe("getCodeInfo", () => {
     const result = await api.getCodeInfo("A3K9M2");
 
     expect(result.type).toBe("file");
-    if (result.type === "file") {
-      expect(result.code).toBe("A3K9M2");
-      expect(result.files).toHaveLength(1);
-      expect(result.remainingDownloads).toBe(18);
-    }
+    expect((result as { code: string }).code).toBe("A3K9M2");
+    expect((result as { files: unknown[] }).files).toHaveLength(1);
+    expect((result as { remainingDownloads: number }).remainingDownloads).toBe(18);
     expect(mockFetch).toHaveBeenCalledWith("/api/code/A3K9M2", {});
   });
 
@@ -136,9 +134,7 @@ describe("getCodeInfo", () => {
     const result = await api.getCodeInfo("B4N8P3");
 
     expect(result.type).toBe("text");
-    if (result.type === "text") {
-      expect(result.content).toBe("Hello World");
-    }
+    expect((result as { content: string }).content).toBe("Hello World");
     expect(mockFetch).toHaveBeenCalledWith("/api/code/B4N8P3", {});
   });
 
