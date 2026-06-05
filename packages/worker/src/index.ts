@@ -10,6 +10,7 @@ import uploadApi from "./api/upload.api";
 import downloadApi from "./api/download.api";
 import adminApi from "./api/admin.api";
 import textApi from "./api/text.api";
+import { SignalingDO } from "./do/signaling.do";
 
 const app = new Hono<{ Bindings: CloudflareBindings }>();
 
@@ -28,6 +29,23 @@ app.route("/", uploadApi);
 app.route("/", downloadApi);
 app.route("/", adminApi);
 app.route("/", textApi);
+
+// ── WebSocket 信令 ──
+app.get("/ws/signaling/:code", (c) => {
+  const code = c.req.param("code").toUpperCase();
+  const role = c.req.query("role") || "sender";
+
+  // 获取或创建 DO
+  const doId = c.env.SIGNALING.idFromName(code);
+  const stub = c.env.SIGNALING.get(doId);
+
+  // 转发请求到 DO
+  return stub.fetch(
+    new Request(`https://do/ws?role=${role}`, {
+      headers: { Upgrade: "websocket" },
+    }),
+  );
+});
 
 // ── 健康检查 ──
 app.get("/api/health", (c) => {
@@ -53,3 +71,6 @@ export default {
     });
   },
 };
+
+// Durable Object 导出
+export { SignalingDO };

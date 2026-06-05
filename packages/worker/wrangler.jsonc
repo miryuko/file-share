@@ -33,6 +33,21 @@
 			"preview_id": "file-share-kv-preview"
 		}
 	],
+	// ── Durable Objects（WebRTC 信令） ──
+	"durable_objects": {
+		"bindings": [
+			{
+				"name": "SIGNALING",
+				"class_name": "SignalingDO"
+			}
+		]
+	},
+	"migrations": [
+		{
+			"tag": "v1",
+			"new_classes": ["SignalingDO"]
+		}
+	],
 	// ── 环境变量 ──
 	"vars": {
 		"ADMIN_JWT_SECRET": "file-share-dev-secret-change-in-production"
