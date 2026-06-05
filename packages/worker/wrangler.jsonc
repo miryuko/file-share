@@ -17,5 +17,26 @@
 	"upload_source_maps": true,
 	"compatibility_flags": [
 		"nodejs_compat"
-	]
+	],
+	// ── R2 文件存储 ──
+	"r2_buckets": [
+		{
+			"binding": "FILE_BUCKET",
+			"bucket_name": "file-share-files"
+		}
+	],
+	// ── KV 元数据存储 ──
+	"kv_namespaces": [
+		{
+			"binding": "FILE_KV",
+			"id": "file-share-kv",
+			"preview_id": "file-share-kv-preview"
+		}
+	],
+	// ── 定时清理任务（每 5 分钟扫描过期会话） ──
+	"triggers": {
+		"crons": [
+			"*/5 * * * *"
+		]
+	}
 }

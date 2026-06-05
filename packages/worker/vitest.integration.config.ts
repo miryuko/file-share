@@ -9,8 +9,9 @@ export default defineConfig({
         FILE_BUCKET: { type: "r2" },
         FILE_KV: { type: "kv" },
       },
+      modules: true,
+      scriptPath: "./src/index.ts",
     },
-    // Integration tests take longer — 30s timeout
     testTimeout: 30_000,
   },
 });
