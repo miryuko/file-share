@@ -1,6 +1,7 @@
 <script setup lang="ts">
-import { ref, computed } from "vue";
+import { ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
+import { Upload } from "lucide-vue-next";
 import { useFileUpload } from "../composables/useFileUpload";
 import { ApiError } from "../lib/api";
 import { generateQRCodeDataURI } from "../lib/qrcode";
@@ -15,14 +16,15 @@ const { t } = useI18n();
 
 type ShareMode = "file" | "text";
 
-const qrCodeURI = computed(() => {
-  const code = shareCode.value || textCode.value;
-  return code ? generateQRCodeDataURI(code) : "";
-});
-
 const mode = ref<ShareMode>("file");
 
 const { shareCode, files, isUploading, uploadFiles, reset } = useFileUpload();
+
+function buildShareUrl(code: string): string {
+  return `${window.location.origin}/receive/${code}`;
+}
+
+const qrCodeURI = ref("");
 
 const fileInput = ref<HTMLInputElement | null>(null);
 const dragOver = ref(false);
@@ -34,6 +36,18 @@ const textCode = ref("");
 const textLoading = ref(false);
 const textError = ref("");
 const textCopied = ref(false);
+
+// 分享码变化时异步生成 QR 码（编码完整 URL）
+watch(
+  () => shareCode.value || textCode.value,
+  async (code) => {
+    if (code) {
+      qrCodeURI.value = await generateQRCodeDataURI(buildShareUrl(code));
+    } else {
+      qrCodeURI.value = "";
+    }
+  },
+);
 const MAX_TEXT_SIZE = 1 * 1024 * 1024;
 const encoder = new TextEncoder();
 
@@ -99,7 +113,7 @@ function onDrop(event: DragEvent): void {
 async function copyCode(): Promise<void> {
   if (!shareCode.value) return;
   try {
-    await navigator.clipboard.writeText(shareCode.value);
+    await navigator.clipboard.writeText(buildShareUrl(shareCode.value));
     copied.value = true;
     setTimeout(() => { copied.value = false; }, 2000);
   } catch { /* fallback */ }
@@ -147,7 +161,7 @@ async function handleTextSend(): Promise<void> {
 async function copyTextCode(): Promise<void> {
   if (!textCode.value) return;
   try {
-    await navigator.clipboard.writeText(textCode.value);
+    await navigator.clipboard.writeText(buildShareUrl(textCode.value));
     textCopied.value = true;
     setTimeout(() => { textCopied.value = false; }, 2000);
   } catch { /* fallback */ }
@@ -188,12 +202,7 @@ function formatSize(bytes: number): string {
           @drop.prevent="onDrop"
           @click="fileInput?.click()"
         >
-          <svg class="mx-auto mb-4 text-muted-foreground" viewBox="0 0 24 24" width="48" height="48">
-            <path
-              fill="currentColor"
-              d="M11 16V7.85l-2.6 2.6L7 9l5-5 5 5-1.4 1.45-2.6-2.6V16h-2Zm-4 4q-.825 0-1.413-.588T5 18v-3h2v3h12v-3h2v3q0 .825-.588 1.413T19 20H7Z"
-            />
-          </svg>
+          <Upload class="mx-auto mb-4 text-muted-foreground" :size="48" />
           <p class="mb-2 text-lg">{{ $t('send.dropZone') }}</p>
           <p class="text-xs text-muted-foreground">{{ $t('send.fileLimits') }}</p>
         </div>
