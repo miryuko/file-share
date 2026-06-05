@@ -45,7 +45,9 @@ export async function createSession(
 
   // 3. 为每个文件创建 R2 multipart upload
   const now = Date.now();
-  const ttlMs = config.ttlSeconds * 1000;
+  // -1 = unlimited TTL: use a far-future expiry, skip KV expirationTtl
+  const isUnlimitedTtl = config.ttlSeconds === -1;
+  const ttlMs = isUnlimitedTtl ? 100 * 365 * 24 * 3600 * 1000 : config.ttlSeconds * 1000; // 100 years
   const files: CreateSessionResponse["files"] = [];
 
   for (let i = 0; i < input.files.length; i++) {
@@ -105,9 +107,11 @@ export async function createSession(
   };
 
   try {
-    await env.FILE_KV.put(`code:${code}`, JSON.stringify(session), {
-      expirationTtl: config.ttlSeconds,
-    });
+    await env.FILE_KV.put(
+      `code:${code}`,
+      JSON.stringify(session),
+      isUnlimitedTtl ? undefined : { expirationTtl: config.ttlSeconds },
+    );
   } catch (err) {
     console.error(JSON.stringify({
       event: "kv.write.failed",

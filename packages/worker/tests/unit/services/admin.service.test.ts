@@ -325,25 +325,42 @@ describe("getSiteConfig", () => {
     expect(config.footerNotice).toBe("© 2024 My Share");
   });
 
-  it("仅返回公开字段，不泄露敏感配置", async () => {
+  it("应返回完整公开配置（含限制字段，供前端校验使用）", async () => {
     store.set(
       "admin:config",
       JSON.stringify({
-        maxFileSize: 1024,
-        siteTitle: "Secure Share",
+        maxFileSize: 200 * 1024 * 1024,
+        maxTotalSize: 1024 * 1024 * 1024,
+        maxFiles: 30,
+        maxTextSize: 2 * 1024 * 1024,
+        siteTitle: "Custom Share",
+        siteDescription: "Desc",
+        footerNotice: "Custom footer",
       }),
     );
 
     const config = await getSiteConfig({ FILE_KV: mockKV });
-    expect(config.siteTitle).toBe("Secure Share");
-    // 确保不包含管理员专属字段
-    expect((config as Record<string, unknown>).maxFileSize).toBeUndefined();
+    expect(config.siteTitle).toBe("Custom Share");
+    expect(config.siteDescription).toBe("Desc");
+    expect(config.footerNotice).toBe("Custom footer");
+    expect(config.maxFileSize).toBe(200 * 1024 * 1024);
+    expect(config.maxTotalSize).toBe(1024 * 1024 * 1024);
+    expect(config.maxFiles).toBe(30);
+    expect(config.maxTextSize).toBe(2 * 1024 * 1024);
+  });
+
+  it("无配置时应返回默认限制值", async () => {
+    const config = await getSiteConfig({ FILE_KV: mockKV });
+    expect(config.maxFileSize).toBe(100 * 1024 * 1024);
+    expect(config.maxTotalSize).toBe(500 * 1024 * 1024);
+    expect(config.maxFiles).toBe(20);
+    expect(config.maxTextSize).toBe(100000);
   });
 });
 
 describe("DEFAULT_ADMIN_CONFIG 新增字段", () => {
-  it("应包含 maxTextSize 默认值", () => {
-    expect(DEFAULT_ADMIN_CONFIG.maxTextSize).toBe(1 * 1024 * 1024);
+  it("应包含 maxTextSize 默认值（字符数）", () => {
+    expect(DEFAULT_ADMIN_CONFIG.maxTextSize).toBe(100000);
   });
 
   it("应包含 siteTitle 默认值", () => {

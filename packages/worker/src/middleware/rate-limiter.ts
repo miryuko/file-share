@@ -8,12 +8,18 @@ import { AppError } from "../utils/error";
  * 键格式：rate:{IP}:{windowTimestamp}
  *
  * @param namespace - KV namespace 用于存储计数器
- * @param maxRequests - 每分钟最大请求数，默认 10
+ * @param maxRequests - 每分钟最大请求数，-1 = 无限制，默认 10
  */
 export function rateLimiter(
   namespace: KVNamespace,
   maxRequests = 10,
 ) {
+  // 无限制时直接放行
+  if (maxRequests === -1) {
+    return async (_c: Context, next: Next) => {
+      await next();
+    };
+  }
   return async (c: Context, next: Next) => {
     const clientIP = c.req.header("CF-Connecting-IP") || "unknown";
     // 按分钟窗口计算

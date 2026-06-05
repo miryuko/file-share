@@ -306,5 +306,9 @@ export async function getSiteConfig(
     siteTitle: config.siteTitle,
     siteDescription: config.siteDescription,
     footerNotice: config.footerNotice,
+    maxFileSize: config.maxFileSize,
+    maxTotalSize: config.maxTotalSize,
+    maxFiles: config.maxFiles,
+    maxTextSize: config.maxTextSize,
   };
 }

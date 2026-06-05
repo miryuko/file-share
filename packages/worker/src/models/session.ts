@@ -37,19 +37,19 @@ export interface Session {
 
 /** 管理员配置 */
 export interface AdminConfig {
-  /** 单文件最大大小（bytes），默认 100MB */
+  /** 单文件最大大小（bytes），-1 = 无限制，默认 100MB */
   maxFileSize: number;
-  /** 单次分享总大小上限（bytes），默认 500MB */
+  /** 单次分享总大小上限（bytes），-1 = 无限制，默认 500MB */
   maxTotalSize: number;
-  /** 单次分享最大文件数，默认 20 */
+  /** 单次分享最大文件数，-1 = 无限制，默认 20 */
   maxFiles: number;
   /** 文件过期时间（秒），默认 3600（1h） */
   ttlSeconds: number;
-  /** 最大下载次数，默认 20 */
+  /** 最大下载次数，-1 = 无限制，默认 20 */
   maxDownloads: number;
   /** 单 IP 每分钟最多分享数，默认 10 */
   rateLimitPerMinute: number;
-  /** 文本分享最大大小（bytes），默认 1MB */
+  /** 文本分享最大字符数（Unicode 码点），-1 = 无限制，默认 100000 */
   maxTextSize: number;
   /** 站点标题（浏览器标签页），默认 "File Share" */
   siteTitle: string;
@@ -59,11 +59,19 @@ export interface AdminConfig {
   footerNotice: string;
 }
 
-/** 公开站点配置（从 AdminConfig 提取，无需认证即可读取） */
+/** 公开站点配置（从 AdminConfig 提取，无需认证即可读取，包含前端校验所需限制字段） */
 export interface SiteConfig {
   siteTitle: string;
   siteDescription: string;
   footerNotice: string;
+  /** 单文件最大大小（bytes） */
+  maxFileSize: number;
+  /** 单次分享总大小上限（bytes） */
+  maxTotalSize: number;
+  /** 单次分享最大文件数 */
+  maxFiles: number;
+  /** 文本分享最大字符数（Unicode 码点），-1 = 无限制 */
+  maxTextSize: number;
 }
 
 /** 默认管理员配置 */
@@ -74,7 +82,7 @@ export const DEFAULT_ADMIN_CONFIG: AdminConfig = {
   ttlSeconds: 3600, // 1 hour
   maxDownloads: 20,
   rateLimitPerMinute: 10,
-  maxTextSize: 1 * 1024 * 1024, // 1MB
+  maxTextSize: 100000, // 10万字符
   siteTitle: "File Share",
   siteDescription: "",
   footerNotice: "",

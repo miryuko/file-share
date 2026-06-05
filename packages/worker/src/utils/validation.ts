@@ -37,7 +37,7 @@ export function validateFiles(
     );
   }
 
-  if (files.length > config.maxFiles) {
+  if (config.maxFiles !== -1 && files.length > config.maxFiles) {
     throw new AppError(
       "TOO_MANY_FILES",
       400,
@@ -46,7 +46,7 @@ export function validateFiles(
   }
 
   const totalSize = files.reduce((sum, f) => sum + f.size, 0);
-  if (totalSize > config.maxTotalSize) {
+  if (config.maxTotalSize !== -1 && totalSize > config.maxTotalSize) {
     const limitMB = (config.maxTotalSize / (1024 * 1024)).toFixed(0);
     throw new AppError(
       "TOTAL_SIZE_EXCEEDED",
@@ -80,7 +80,7 @@ export function validateFiles(
       );
     }
 
-    if (file.size > config.maxFileSize) {
+    if (config.maxFileSize !== -1 && file.size > config.maxFileSize) {
       const limitMB = (config.maxFileSize / (1024 * 1024)).toFixed(0);
       throw new AppError(
         "FILE_TOO_LARGE",

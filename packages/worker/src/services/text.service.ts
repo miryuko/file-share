@@ -32,14 +32,12 @@ export async function createTextShare(
     throw new AppError("TEXT_EMPTY", 400, "请输入要分享的文本内容");
   }
 
-  const contentBytes = new TextEncoder().encode(content);
-  if (contentBytes.byteLength > maxTextSize) {
-    const sizeMB = (contentBytes.byteLength / (1024 * 1024)).toFixed(1);
-    const limitMB = (maxTextSize / (1024 * 1024)).toFixed(0);
+  const charCount = [...content].length;
+  if (maxTextSize !== -1 && charCount > maxTextSize) {
     throw new AppError(
       "TEXT_TOO_LARGE",
       400,
-      `文本过长（${sizeMB}MB），当前限制 ${limitMB}MB，请使用文件传输`,
+      `文本过长（${charCount} 字符），当前限制 ${maxTextSize} 字符`,
     );
   }
 
@@ -60,19 +58,22 @@ export async function createTextShare(
   }
 
   const now = Date.now();
-  const ttlSeconds = config.ttlSeconds;
+  const isUnlimitedTtl = config.ttlSeconds === -1;
+  const ttlMs = isUnlimitedTtl ? 100 * 365 * 24 * 3600 * 1000 : config.ttlSeconds * 1000;
 
   const entry: TextEntry = {
     code,
     content,
     createdAt: now,
-    expiresAt: now + ttlSeconds * 1000,
+    expiresAt: now + ttlMs,
   };
 
   try {
-    await env.FILE_KV.put(`text:${code}`, JSON.stringify(entry), {
-      expirationTtl: ttlSeconds,
-    });
+    await env.FILE_KV.put(
+      `text:${code}`,
+      JSON.stringify(entry),
+      isUnlimitedTtl ? undefined : { expirationTtl: config.ttlSeconds },
+    );
   } catch {
     throw new AppError("STORAGE_ERROR", 503, "服务异常，请稍后重试");
   }
@@ -80,7 +81,7 @@ export async function createTextShare(
   console.log(JSON.stringify({
     event: "text.created",
     code,
-    size: contentBytes.byteLength,
+    charCount,
   }));
 
   return { code, expiresAt: entry.expiresAt };
