@@ -3,11 +3,24 @@ import { ref } from "vue";
 import { useFileUpload } from "../composables/useFileUpload";
 import { ApiError } from "../lib/api";
 
+type ShareMode = "file" | "text";
+
+const mode = ref<ShareMode>("file");
+
 const { shareCode, files, isUploading, uploadFiles, reset } = useFileUpload();
 
 const fileInput = ref<HTMLInputElement | null>(null);
 const dragOver = ref(false);
 const errorMessage = ref("");
+
+// Text sharing state
+const textContent = ref("");
+const textCode = ref("");
+const textLoading = ref(false);
+const textError = ref("");
+const textCopied = ref(false);
+const MAX_TEXT_SIZE = 1 * 1024 * 1024;
+const encoder = new TextEncoder();
 const copied = ref(false);
 
 const MAX_TOTAL_SIZE = 500 * 1024 * 1024; // 500MB
@@ -82,6 +95,61 @@ async function copyCode(): Promise<void> {
   }
 }
 
+async function handleTextSend(): Promise<void> {
+  textError.value = "";
+  const content = textContent.value.trim();
+
+  if (!content) {
+    textError.value = "请输入要分享的文本内容";
+    return;
+  }
+
+  const bytes = encoder.encode(content);
+  if (bytes.byteLength > MAX_TEXT_SIZE) {
+    const sizeMB = (bytes.byteLength / (1024 * 1024)).toFixed(1);
+    textError.value = `文本过长（${sizeMB}MB），当前限制 1MB，请使用文件传输`;
+    return;
+  }
+
+  textLoading.value = true;
+  try {
+    const res = await fetch("/api/text/create", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ content }),
+    });
+
+    if (!res.ok) {
+      const body = (await res.json()) as { message: string };
+      textError.value = body.message || "发送失败";
+      return;
+    }
+
+    const { code } = (await res.json()) as { code: string };
+    textCode.value = code;
+  } catch {
+    textError.value = "网络异常，请检查连接";
+  } finally {
+    textLoading.value = false;
+  }
+}
+
+async function copyTextCode(): Promise<void> {
+  if (!textCode.value) return;
+  try {
+    await navigator.clipboard.writeText(textCode.value);
+    textCopied.value = true;
+    setTimeout(() => { textCopied.value = false; }, 2000);
+  } catch { /* fallback */ }
+}
+
+function resetAll(): void {
+  reset();
+  textCode.value = "";
+  textContent.value = "";
+  textError.value = "";
+}
+
 function formatSize(bytes: number): string {
   if (bytes < 1024) return `${bytes} B`;
   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
@@ -94,8 +162,26 @@ function formatSize(bytes: number): string {
     <h1 class="title">File Share</h1>
     <p class="subtitle">安全、匿名、即时的文件传输</p>
 
-    <!-- 上传区域 -->
-    <div v-if="!shareCode" class="upload-section">
+    <!-- 模式切换 tab -->
+    <div v-if="!shareCode && !textCode" class="mode-tabs">
+      <button
+        class="tab-btn"
+        :class="{ active: mode === 'file' }"
+        @click="mode = 'file'"
+      >
+        文件
+      </button>
+      <button
+        class="tab-btn"
+        :class="{ active: mode === 'text' }"
+        @click="mode = 'text'"
+      >
+        文本
+      </button>
+    </div>
+
+    <!-- ===== 文件分享模式 ===== -->
+    <div v-if="mode === 'file' && !shareCode" class="upload-section">
       <div
         class="drop-zone"
         :class="{ 'drag-over': dragOver }"
@@ -129,6 +215,41 @@ function formatSize(bytes: number): string {
       <div v-if="errorMessage" class="error-message">
         {{ errorMessage }}
       </div>
+    </div>
+
+    <!-- ===== 文本分享模式 ===== -->
+    <div v-if="mode === 'text' && !textCode" class="text-section">
+      <textarea
+        v-model="textContent"
+        class="text-input"
+        placeholder="在此粘贴或输入文本内容（限 1MB）..."
+        rows="8"
+      ></textarea>
+      <div class="text-actions">
+        <span class="char-count">
+          {{ encoder.encode(textContent).byteLength.toLocaleString() }} bytes
+        </span>
+        <button
+          class="btn btn-send-text"
+          :disabled="!textContent.trim() || textLoading"
+          @click="handleTextSend"
+        >
+          {{ textLoading ? "发送中..." : "发送文本" }}
+        </button>
+      </div>
+      <div v-if="textError" class="error-message">{{ textError }}</div>
+    </div>
+
+    <!-- 文本分享结果 -->
+    <div v-if="textCode" class="result-section">
+      <div class="share-code-box">
+        <p class="share-label">文本分享码</p>
+        <p class="share-code">{{ textCode }}</p>
+        <button class="btn btn-copy" @click="copyTextCode">
+          {{ textCopied ? "已复制 ✓" : "一键复制" }}
+        </button>
+      </div>
+      <button class="btn btn-new" @click="resetAll">发送新内容</button>
     </div>
 
     <!-- 上传进度 -->
@@ -167,7 +288,7 @@ function formatSize(bytes: number): string {
         </div>
       </div>
 
-      <button class="btn btn-new" @click="reset">
+      <button class="btn btn-new" @click="resetAll">
         发送新文件
       </button>
     </div>
@@ -191,8 +312,86 @@ function formatSize(bytes: number): string {
 .subtitle {
   text-align: center;
   color: var(--color-text-muted, #666);
-  margin-bottom: 2rem;
+  margin-bottom: 1.5rem;
   font-size: 0.9rem;
+}
+
+.mode-tabs {
+  display: flex;
+  justify-content: center;
+  gap: 0;
+  margin-bottom: 1.5rem;
+  border-bottom: 2px solid #e5e7eb;
+}
+
+.tab-btn {
+  padding: 0.5rem 2rem;
+  border: none;
+  background: none;
+  font-size: 0.95rem;
+  cursor: pointer;
+  color: #6b7280;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -2px;
+  transition: color 0.2s, border-color 0.2s;
+}
+
+.tab-btn.active {
+  color: #4a90d9;
+  border-bottom-color: #4a90d9;
+}
+
+.text-section {
+  max-width: 480px;
+  margin: 0 auto;
+}
+
+.text-input {
+  width: 100%;
+  padding: 1rem;
+  border: 2px solid #ddd;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  font-family: inherit;
+  resize: vertical;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.text-input:focus {
+  border-color: #4a90d9;
+}
+
+.text-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 0.75rem;
+}
+
+.char-count {
+  font-size: 0.8rem;
+  color: #999;
+}
+
+.btn-send-text {
+  background: #4a90d9;
+  color: white;
+  padding: 0.625rem 1.5rem;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.btn-send-text:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn-send-text:hover:not(:disabled) {
+  background: #3b7ec0;
 }
 
 .drop-zone {

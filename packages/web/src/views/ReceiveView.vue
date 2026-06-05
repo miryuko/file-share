@@ -2,6 +2,8 @@
 import { ref } from "vue";
 import { getSession, getDownloadUrl, ApiError } from "../lib/api";
 
+type ReceiveMode = "file" | "text";
+
 interface FileInfo {
   fileId: string;
   filename: string;
@@ -9,6 +11,7 @@ interface FileInfo {
   contentType: string;
 }
 
+const receiveMode = ref<ReceiveMode>("file");
 const codeInput = ref("");
 const isLoading = ref(false);
 const errorMessage = ref("");
@@ -18,6 +21,11 @@ const session = ref<{
   expiresAt: number;
   remainingDownloads: number;
 } | null>(null);
+
+// Text receive state
+const textResult = ref<{ content: string; expiresAt: number } | null>(null);
+const textCopied = ref(false);
+const encoder = new TextEncoder();
 
 /**
  * 格式化 6 位分享码：自动转大写，过滤非法字符
@@ -38,19 +46,38 @@ async function handleReceive(): Promise<void> {
 
   isLoading.value = true;
   errorMessage.value = "";
+  session.value = null;
+  textResult.value = null;
 
   try {
-    session.value = await getSession(code);
+    if (receiveMode.value === "text") {
+      const res = await fetch(`/api/text/${code}`);
+      if (!res.ok) {
+        const body = (await res.json()) as { message: string };
+        throw new ApiError(body.message, res.status, body.message);
+      }
+      textResult.value = (await res.json()) as { content: string; expiresAt: number };
+    } else {
+      session.value = await getSession(code);
+    }
   } catch (err) {
     if (err instanceof ApiError) {
       errorMessage.value = err.message;
     } else {
       errorMessage.value = "查询失败，请检查网络后重试";
     }
-    session.value = null;
   } finally {
     isLoading.value = false;
   }
+}
+
+async function copyTextContent(): Promise<void> {
+  if (!textResult.value) return;
+  try {
+    await navigator.clipboard.writeText(textResult.value.content);
+    textCopied.value = true;
+    setTimeout(() => { textCopied.value = false; }, 2000);
+  } catch { /* fallback */ }
 }
 
 function formatSize(bytes: number): string {
@@ -69,6 +96,7 @@ function formatExpiry(expiresAt: number): string {
 
 function reset(): void {
   session.value = null;
+  textResult.value = null;
   codeInput.value = "";
   errorMessage.value = "";
 }
@@ -76,10 +104,16 @@ function reset(): void {
 
 <template>
   <div class="receive-page">
-    <h1 class="title">接收文件</h1>
+    <h1 class="title">接收</h1>
+
+    <!-- 模式切换 -->
+    <div v-if="!session && !textResult" class="mode-tabs">
+      <button class="tab-btn" :class="{ active: receiveMode === 'file' }" @click="receiveMode = 'file'">文件</button>
+      <button class="tab-btn" :class="{ active: receiveMode === 'text' }" @click="receiveMode = 'text'">文本</button>
+    </div>
 
     <!-- 输入分享码 -->
-    <div v-if="!session" class="input-section">
+    <div v-if="!session && !textResult" class="input-section">
       <div class="code-input-group">
         <input
           v-model="codeInput"
@@ -137,6 +171,23 @@ function reset(): void {
         接收其他文件
       </button>
     </div>
+
+    <!-- 文本结果 -->
+    <div v-if="textResult" class="text-result-section">
+      <div class="text-content-box">
+        <pre class="text-content">{{ textResult.content }}</pre>
+      </div>
+      <div class="text-meta">
+        <span>{{ formatExpiry(textResult.expiresAt) }}</span>
+        <span class="text-size">{{ encoder.encode(textResult.content).byteLength.toLocaleString() }} bytes</span>
+      </div>
+      <button class="btn btn-copy-text" @click="copyTextContent">
+        {{ textCopied ? "已复制 ✓" : "一键复制" }}
+      </button>
+      <button class="btn btn-back" @click="reset">
+        接收其他内容
+      </button>
+    </div>
   </div>
 </template>
 
@@ -150,6 +201,34 @@ function reset(): void {
 .title {
   text-align: center;
   font-size: 1.75rem;
+  font-weight: 700;
+  margin-bottom: 1.5rem;
+}
+
+.mode-tabs {
+  display: flex;
+  justify-content: center;
+  gap: 0;
+  margin-bottom: 1.5rem;
+  border-bottom: 2px solid #e5e7eb;
+}
+
+.tab-btn {
+  padding: 0.5rem 2rem;
+  border: none;
+  background: none;
+  font-size: 0.95rem;
+  cursor: pointer;
+  color: #6b7280;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -2px;
+  transition: color 0.2s, border-color 0.2s;
+}
+
+.tab-btn.active {
+  color: #4a90d9;
+  border-bottom-color: #4a90d9;
+}
   font-weight: 700;
   margin-bottom: 2rem;
 }
@@ -294,5 +373,53 @@ function reset(): void {
 .file-card-size {
   font-size: 0.8rem;
   color: #999;
+}
+
+.text-result-section {
+  text-align: center;
+}
+
+.text-content-box {
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 1.5rem;
+  margin-bottom: 1rem;
+  text-align: left;
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.text-content {
+  white-space: pre-wrap;
+  word-break: break-word;
+  font-size: 0.9rem;
+  line-height: 1.6;
+  font-family: inherit;
+  margin: 0;
+}
+
+.text-meta {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.8rem;
+  color: #999;
+  margin-bottom: 1rem;
+}
+
+.btn-copy-text {
+  background: #4a90d9;
+  color: white;
+  padding: 0.625rem 1.5rem;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  cursor: pointer;
+  margin-bottom: 1rem;
+  transition: background-color 0.2s;
+}
+
+.btn-copy-text:hover {
+  background: #3b7ec0;
 }
 </style>
