@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref } from "vue";
 import { getSession, getDownloadUrl, ApiError } from "../lib/api";
+import P2PTransfer from "../components/P2PTransfer.vue";
 
 type ReceiveMode = "file" | "text";
 
@@ -94,6 +95,16 @@ function formatExpiry(expiresAt: number): string {
   return `${hours} 小时 ${remaining % 60} 分钟后过期`;
 }
 
+function handleP2PFileReceived(file: { name: string; data: ArrayBuffer; size: number }): void {
+  const blob = new Blob([file.data]);
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = file.name;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
 function reset(): void {
   session.value = null;
   textResult.value = null;
@@ -146,6 +157,13 @@ function reset(): void {
         <span class="expiry">{{ formatExpiry(session.expiresAt) }}</span>
         <span class="remaining">剩余下载: {{ session.remainingDownloads }} 次</span>
       </div>
+
+      <!-- P2P 连接状态 -->
+      <P2PTransfer
+        :code="session.code"
+        role="receiver"
+        @file-received="handleP2PFileReceived"
+      />
 
       <div class="file-list">
         <div

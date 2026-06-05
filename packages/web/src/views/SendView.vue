@@ -3,6 +3,7 @@ import { ref, computed } from "vue";
 import { useFileUpload } from "../composables/useFileUpload";
 import { ApiError } from "../lib/api";
 import { generateQRCodeDataURI } from "../lib/qrcode";
+import P2PTransfer from "../components/P2PTransfer.vue";
 
 type ShareMode = "file" | "text";
 
@@ -286,6 +287,14 @@ function formatSize(bytes: number): string {
           {{ copied ? "已复制 ✓" : "一键复制" }}
         </button>
       </div>
+
+      <!-- P2P 连接状态 -->
+      <P2PTransfer
+        v-if="shareCode"
+        :code="shareCode"
+        role="sender"
+        @fallback="console.log('P2P fallback, using R2 upload')"
+      />
 
       <div class="file-list">
         <div v-for="f in files" :key="f.fileId || f.file.name" class="file-item">
