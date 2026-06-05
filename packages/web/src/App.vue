@@ -5,8 +5,8 @@ import { Globe } from 'lucide-vue-next'
 import {
   DropdownMenu,
   DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import ModeToggle from '@/components/ModeToggle.vue'
@@ -31,10 +31,6 @@ const locales: LocaleOption[] = [
   { code: 'ru', nativeName: 'Русский' },
   { code: 'ar', nativeName: 'العربية' },
 ]
-
-function switchLocale(code: string): void {
-  locale.value = code
-}
 
 function currentNativeName(): string {
   return locales.find(l => l.code === locale.value)?.nativeName || locale.value
@@ -67,15 +63,15 @@ function currentNativeName(): string {
               <span class="hidden sm:inline">{{ currentNativeName() }}</span>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" class="w-40">
-              <DropdownMenuLabel>{{ $t('app.nav.language') }}</DropdownMenuLabel>
-              <DropdownMenuItem
-                v-for="item in locales"
-                :key="item.code"
-                :class="{ 'bg-accent text-accent-foreground': locale === item.code }"
-                @click="switchLocale(item.code)"
-              >
-                {{ item.nativeName }}
-              </DropdownMenuItem>
+              <DropdownMenuRadioGroup v-model="locale">
+                <DropdownMenuRadioItem
+                  v-for="item in locales"
+                  :key="item.code"
+                  :value="item.code"
+                >
+                  {{ item.nativeName }}
+                </DropdownMenuRadioItem>
+              </DropdownMenuRadioGroup>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
