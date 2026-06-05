@@ -10,6 +10,7 @@ import uploadApi from "./api/upload.api";
 import downloadApi from "./api/download.api";
 import adminApi from "./api/admin.api";
 import textApi from "./api/text.api";
+import codeApi from "./api/code.api";
 import { SignalingDO } from "./do/signaling.do";
 
 const app = new Hono<{ Bindings: CloudflareBindings }>();
@@ -33,6 +34,7 @@ app.route("/", uploadApi);
 app.route("/", downloadApi);
 app.route("/", adminApi);
 app.route("/", textApi);
+app.route("/", codeApi);
 
 // ── WebSocket 信令 ──
 app.get("/ws/signaling/:code", (c) => {
