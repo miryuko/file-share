@@ -2,6 +2,10 @@
 import { ref } from "vue";
 import { getSession, getDownloadUrl, ApiError } from "../lib/api";
 import P2PTransfer from "../components/P2PTransfer.vue";
+import { Button } from "../components/ui/button";
+import { Input } from "../components/ui/input";
+import { Card, CardContent } from "../components/ui/card";
+import { Tabs, TabsList, TabsTrigger } from "../components/ui/tabs";
 
 type ReceiveMode = "file" | "text";
 
@@ -23,17 +27,12 @@ const session = ref<{
   remainingDownloads: number;
 } | null>(null);
 
-// Text receive state
 const textResult = ref<{ content: string; expiresAt: number } | null>(null);
 const textCopied = ref(false);
 const encoder = new TextEncoder();
 
-/**
- * 格式化 6 位分享码：自动转大写，过滤非法字符
- */
 function onCodeInput(event: Event): void {
   const input = event.target as HTMLInputElement;
-  // 只保留合法字符
   input.value = input.value.toUpperCase().replace(/[^A-HJ-NP-Z2-9]/g, "");
   codeInput.value = input.value;
 }
@@ -114,330 +113,91 @@ function reset(): void {
 </script>
 
 <template>
-  <div class="receive-page">
-    <h1 class="title">接收</h1>
+  <div class="mx-auto max-w-[480px] px-4 py-8">
+    <h1 class="mb-6 text-center text-2xl font-bold">接收</h1>
 
     <!-- 模式切换 -->
-    <div v-if="!session && !textResult" class="mode-tabs">
-      <button class="tab-btn" :class="{ active: receiveMode === 'file' }" @click="receiveMode = 'file'">文件</button>
-      <button class="tab-btn" :class="{ active: receiveMode === 'text' }" @click="receiveMode = 'text'">文本</button>
-    </div>
+    <Tabs v-if="!session && !textResult" v-model="receiveMode" class="mb-6">
+      <TabsList class="grid w-full grid-cols-2">
+        <TabsTrigger value="file">文件</TabsTrigger>
+        <TabsTrigger value="text">文本</TabsTrigger>
+      </TabsList>
+    </Tabs>
 
     <!-- 输入分享码 -->
-    <div v-if="!session && !textResult" class="input-section">
-      <div class="code-input-group">
-        <input
+    <div v-if="!session && !textResult" class="space-y-4">
+      <div class="flex gap-3">
+        <Input
           v-model="codeInput"
-          type="text"
-          class="code-input"
           maxlength="6"
           placeholder="输入 6 位分享码"
           autocomplete="off"
+          class="flex-1 text-center font-mono text-2xl tracking-[0.3em] uppercase"
           @input="onCodeInput"
           @keyup.enter="handleReceive"
         />
-        <button
-          class="btn btn-receive"
-          :disabled="codeInput.length !== 6 || isLoading"
-          @click="handleReceive"
-        >
+        <Button :disabled="codeInput.length !== 6 || isLoading" @click="handleReceive">
           {{ isLoading ? "查询中..." : "接收" }}
-        </button>
+        </Button>
       </div>
-
-      <div v-if="errorMessage" class="error-message">
+      <div
+        v-if="errorMessage"
+        class="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600"
+      >
         {{ errorMessage }}
       </div>
     </div>
 
     <!-- 文件列表 -->
-    <div v-if="session" class="session-info">
-      <div class="session-meta">
-        <span class="share-code-label">分享码: <strong>{{ session.code }}</strong></span>
-        <span class="expiry">{{ formatExpiry(session.expiresAt) }}</span>
-        <span class="remaining">剩余下载: {{ session.remainingDownloads }} 次</span>
+    <div v-if="session" class="text-center">
+      <div class="mb-6 flex flex-col gap-1 rounded-lg bg-sky-50 p-4 text-sm text-gray-600">
+        <span>分享码: <strong class="text-lg text-blue-800">{{ session.code }}</strong></span>
+        <span>{{ formatExpiry(session.expiresAt) }}</span>
+        <span>剩余下载: {{ session.remainingDownloads }} 次</span>
       </div>
 
-      <!-- P2P 连接状态 -->
       <P2PTransfer
         :code="session.code"
         role="receiver"
         @file-received="handleP2PFileReceived"
       />
 
-      <div class="file-list">
-        <div
-          v-for="file in session.files"
-          :key="file.fileId"
-          class="file-card"
-        >
-          <div class="file-card-info">
-            <span class="file-card-name">{{ file.filename }}</span>
-            <span class="file-card-size">{{ formatSize(file.size) }}</span>
-          </div>
-          <a
-            :href="getDownloadUrl(session.code, file.fileId)"
-            class="btn btn-download"
-            download
-          >
-            下载
-          </a>
-        </div>
+      <div class="text-left">
+        <Card v-for="file in session.files" :key="file.fileId" class="mb-2 hover:border-blue-500">
+          <CardContent class="flex items-center gap-3 p-4">
+            <div class="min-w-0 flex-1">
+              <p class="truncate font-medium">{{ file.filename }}</p>
+              <p class="text-xs text-gray-400">{{ formatSize(file.size) }}</p>
+            </div>
+            <a :href="getDownloadUrl(session.code, file.fileId)" download>
+              <Button variant="default" class="bg-green-600 hover:bg-green-700">下载</Button>
+            </a>
+          </CardContent>
+        </Card>
       </div>
 
-      <button class="btn btn-back" @click="reset">
+      <Button variant="secondary" class="mt-6 w-full" @click="reset">
         接收其他文件
-      </button>
+      </Button>
     </div>
 
     <!-- 文本结果 -->
-    <div v-if="textResult" class="text-result-section">
-      <div class="text-content-box">
-        <pre class="text-content">{{ textResult.content }}</pre>
-      </div>
-      <div class="text-meta">
+    <div v-if="textResult" class="text-center">
+      <Card class="mb-4 max-h-[400px] overflow-y-auto text-left">
+        <CardContent class="p-6">
+          <pre class="whitespace-pre-wrap break-words text-sm leading-relaxed">{{ textResult.content }}</pre>
+        </CardContent>
+      </Card>
+      <div class="mb-4 flex justify-between text-xs text-gray-400">
         <span>{{ formatExpiry(textResult.expiresAt) }}</span>
-        <span class="text-size">{{ encoder.encode(textResult.content).byteLength.toLocaleString() }} bytes</span>
+        <span>{{ encoder.encode(textResult.content).byteLength.toLocaleString() }} bytes</span>
       </div>
-      <button class="btn btn-copy-text" @click="copyTextContent">
+      <Button class="mb-4" @click="copyTextContent">
         {{ textCopied ? "已复制 ✓" : "一键复制" }}
-      </button>
-      <button class="btn btn-back" @click="reset">
+      </Button>
+      <Button variant="secondary" class="mt-4 w-full" @click="reset">
         接收其他内容
-      </button>
+      </Button>
     </div>
   </div>
 </template>
-
-<style scoped>
-.receive-page {
-  max-width: 480px;
-  margin: 0 auto;
-  padding: 2rem 1rem;
-}
-
-.title {
-  text-align: center;
-  font-size: 1.75rem;
-  font-weight: 700;
-  margin-bottom: 1.5rem;
-}
-
-.mode-tabs {
-  display: flex;
-  justify-content: center;
-  gap: 0;
-  margin-bottom: 1.5rem;
-  border-bottom: 2px solid #e5e7eb;
-}
-
-.tab-btn {
-  padding: 0.5rem 2rem;
-  border: none;
-  background: none;
-  font-size: 0.95rem;
-  cursor: pointer;
-  color: #6b7280;
-  border-bottom: 2px solid transparent;
-  margin-bottom: -2px;
-  transition: color 0.2s, border-color 0.2s;
-}
-
-.tab-btn.active {
-  color: #4a90d9;
-  border-bottom-color: #4a90d9;
-}
-  font-weight: 700;
-  margin-bottom: 2rem;
-}
-
-.input-section {
-  margin-bottom: 1.5rem;
-}
-
-.code-input-group {
-  display: flex;
-  gap: 0.75rem;
-}
-
-.code-input {
-  flex: 1;
-  padding: 0.75rem 1rem;
-  font-size: 1.5rem;
-  font-family: monospace;
-  letter-spacing: 0.3em;
-  text-align: center;
-  border: 2px solid #ddd;
-  border-radius: 8px;
-  outline: none;
-  transition: border-color 0.2s;
-  text-transform: uppercase;
-}
-
-.code-input:focus {
-  border-color: #4a90d9;
-}
-
-.btn {
-  padding: 0.625rem 1.5rem;
-  border: none;
-  border-radius: 8px;
-  font-size: 0.95rem;
-  cursor: pointer;
-  transition: background-color 0.2s;
-  white-space: nowrap;
-}
-
-.btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.btn-receive {
-  background: #4a90d9;
-  color: white;
-}
-
-.btn-receive:hover:not(:disabled) {
-  background: #3b7ec0;
-}
-
-.btn-download {
-  background: #16a34a;
-  color: white;
-  text-decoration: none;
-  font-size: 0.85rem;
-  padding: 0.5rem 1rem;
-}
-
-.btn-download:hover {
-  background: #15803d;
-}
-
-.btn-back {
-  background: #f3f4f6;
-  color: #374151;
-  margin-top: 1.5rem;
-  width: 100%;
-}
-
-.btn-back:hover {
-  background: #e5e7eb;
-}
-
-.error-message {
-  margin-top: 1rem;
-  padding: 0.75rem 1rem;
-  background-color: #fef2f2;
-  border: 1px solid #fecaca;
-  border-radius: 8px;
-  color: #dc2626;
-  font-size: 0.9rem;
-}
-
-.session-info {
-  text-align: center;
-}
-
-.session-meta {
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
-  margin-bottom: 1.5rem;
-  padding: 1rem;
-  background: #f0f9ff;
-  border-radius: 8px;
-  font-size: 0.85rem;
-  color: #666;
-}
-
-.share-code-label strong {
-  color: #1e40af;
-  font-size: 1.1rem;
-}
-
-.file-list {
-  text-align: left;
-}
-
-.file-card {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  padding: 0.75rem 1rem;
-  border: 1px solid #e5e7eb;
-  border-radius: 8px;
-  margin-bottom: 0.5rem;
-  transition: border-color 0.2s;
-}
-
-.file-card:hover {
-  border-color: #4a90d9;
-}
-
-.file-card-info {
-  flex: 1;
-  min-width: 0;
-}
-
-.file-card-name {
-  display: block;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  font-weight: 500;
-}
-
-.file-card-size {
-  font-size: 0.8rem;
-  color: #999;
-}
-
-.text-result-section {
-  text-align: center;
-}
-
-.text-content-box {
-  background: #f9fafb;
-  border: 1px solid #e5e7eb;
-  border-radius: 8px;
-  padding: 1.5rem;
-  margin-bottom: 1rem;
-  text-align: left;
-  max-height: 400px;
-  overflow-y: auto;
-}
-
-.text-content {
-  white-space: pre-wrap;
-  word-break: break-word;
-  font-size: 0.9rem;
-  line-height: 1.6;
-  font-family: inherit;
-  margin: 0;
-}
-
-.text-meta {
-  display: flex;
-  justify-content: space-between;
-  font-size: 0.8rem;
-  color: #999;
-  margin-bottom: 1rem;
-}
-
-.btn-copy-text {
-  background: #4a90d9;
-  color: white;
-  padding: 0.625rem 1.5rem;
-  border: none;
-  border-radius: 8px;
-  font-size: 0.95rem;
-  cursor: pointer;
-  margin-bottom: 1rem;
-  transition: background-color 0.2s;
-}
-
-.btn-copy-text:hover {
-  background: #3b7ec0;
-}
-</style>

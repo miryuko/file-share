@@ -7,30 +7,32 @@ describe("AdminView", () => {
     const wrapper = mount(AdminView);
 
     expect(wrapper.text()).toContain("管理面板");
-    expect(wrapper.find(".password-input").exists()).toBe(true);
-    expect(wrapper.find(".btn-login").exists()).toBe(true);
+    // shadcn Input 渲染为 <input>
+    expect(wrapper.find('input[type="password"]').exists()).toBe(true);
+    // shadcn Button 渲染为 <button>
+    expect(wrapper.find("button").exists()).toBe(true);
   });
 
   it("密码为空时登录按钮应禁用", () => {
     const wrapper = mount(AdminView);
 
-    const btn = wrapper.find(".btn-login");
+    const btn = wrapper.find("button");
     expect(btn.attributes("disabled")).toBeDefined();
   });
 
   it("输入密码后登录按钮应启用", async () => {
     const wrapper = mount(AdminView);
 
-    const input = wrapper.find(".password-input");
+    const input = wrapper.find('input[type="password"]');
     await input.setValue("admin123");
 
-    const btn = wrapper.find(".btn-login");
+    const btn = wrapper.find("button");
     expect(btn.attributes("disabled")).toBeUndefined();
   });
 
   it("初始状态下不应显示 dashboard", () => {
     const wrapper = mount(AdminView);
 
-    expect(wrapper.find(".dashboard").exists()).toBe(false);
+    expect(wrapper.text()).not.toContain("退出登录");
   });
 });

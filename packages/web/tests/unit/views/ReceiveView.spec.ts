@@ -6,14 +6,13 @@ describe("ReceiveView", () => {
   it("应渲染标题和输入区域", () => {
     const wrapper = mount(ReceiveView);
 
-    expect(wrapper.text()).toContain("接收文件");
-    expect(wrapper.find("input.code-input").exists()).toBe(true);
     expect(wrapper.text()).toContain("接收");
+    expect(wrapper.find('input[maxlength="6"]').exists()).toBe(true);
   });
 
   it("输入框应限制最大长度 6", () => {
     const wrapper = mount(ReceiveView);
-    const input = wrapper.find("input.code-input");
+    const input = wrapper.find('input[maxlength="6"]');
     expect(input.attributes("maxlength")).toBe("6");
   });
 

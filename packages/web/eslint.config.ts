@@ -20,6 +20,14 @@ export default defineConfigWithVueTs(
   globalIgnores(['**/dist/**', '**/dist-ssr/**', '**/coverage/**']),
 
   ...pluginVue.configs['flat/essential'],
+  {
+    // shadcn-vue 组件使用单名单词组件名（Button、Card 等），允许
+    name: 'app/shadcn-rules',
+    files: ['src/components/ui/**/*.vue'],
+    rules: {
+      'vue/multi-word-component-names': 'off',
+    },
+  },
   vueTsConfigs.recommended,
 
   {

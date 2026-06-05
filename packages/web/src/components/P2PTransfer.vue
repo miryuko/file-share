@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, onUnmounted } from "vue";
 import { useWebRTC } from "../composables/useWebRTC";
+import { Button } from "./ui/button";
 
 const props = defineProps<{
   code: string;
@@ -33,7 +34,6 @@ async function startConnection(): Promise<void> {
   try {
     await connect(props.code, props.role);
   } catch {
-    // 连接失败 → 降级
     errorMsg.value = "P2P 连接失败，切换到服务器中转";
   }
 }
@@ -67,89 +67,30 @@ const statusText: Record<string, string> = {
   fallback: "已切换到服务器中转",
   error: "P2P 错误",
 };
+
+function dotClass(): string {
+  const s = status.value;
+  if (s === "fallback" || s === "error") return "bg-red-600";
+  if (s === "connected" || s === "transferring") return "bg-green-600";
+  return "bg-amber-500 animate-pulse";
+}
 </script>
 
 <template>
-  <div v-if="isActive" class="p2p-status">
-    <div class="p2p-indicator">
-      <span
-        class="p2p-dot"
-        :class="{
-          idle: status === 'idle' || status === 'connecting' || status === 'signaling',
-          connected: status === 'connected' || status === 'transferring',
-          fallback: status === 'fallback' || status === 'error',
-        }"
-      ></span>
-      <span class="p2p-text">{{ statusText[status] || status }}</span>
+  <div v-if="isActive" class="mb-4 text-center">
+    <div class="flex items-center justify-center gap-2 rounded-lg border bg-gray-50 px-4 py-2 text-sm">
+      <span class="inline-block h-2 w-2 rounded-full" :class="dotClass()" />
+      <span>{{ statusText[status] || status }}</span>
     </div>
-    <button
+    <Button
       v-if="status === 'connected' || status === 'transferring'"
-      class="btn btn-cancel-p2p"
+      variant="outline"
+      size="sm"
+      class="mt-2 border-red-200 bg-red-50 text-red-600 hover:bg-red-100"
       @click="cancelP2P"
     >
       切换到服务器中转
-    </button>
-    <div v-if="errorMsg" class="p2p-error">{{ errorMsg }}</div>
+    </Button>
+    <p v-if="errorMsg" class="mt-2 text-xs text-red-600">{{ errorMsg }}</p>
   </div>
 </template>
-
-<style scoped>
-.p2p-status {
-  margin-bottom: 1rem;
-  text-align: center;
-}
-
-.p2p-indicator {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
-  padding: 0.5rem 1rem;
-  background: #f9fafb;
-  border: 1px solid #e5e7eb;
-  border-radius: 8px;
-  font-size: 0.85rem;
-}
-
-.p2p-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  display: inline-block;
-}
-
-.p2p-dot.idle {
-  background: #f59e0b;
-  animation: pulse 1s infinite;
-}
-
-.p2p-dot.connected {
-  background: #16a34a;
-}
-
-.p2p-dot.fallback {
-  background: #dc2626;
-}
-
-@keyframes pulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.4; }
-}
-
-.btn-cancel-p2p {
-  margin-top: 0.5rem;
-  padding: 0.375rem 1rem;
-  border: 1px solid #fecaca;
-  background: #fef2f2;
-  color: #dc2626;
-  border-radius: 6px;
-  font-size: 0.8rem;
-  cursor: pointer;
-}
-
-.p2p-error {
-  margin-top: 0.5rem;
-  font-size: 0.8rem;
-  color: #dc2626;
-}
-</style>

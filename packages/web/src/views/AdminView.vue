@@ -1,7 +1,10 @@
 <script setup lang="ts">
 import { ref, onMounted } from "vue";
+import { Button } from "../components/ui/button";
+import { Input } from "../components/ui/input";
+import { Card, CardContent, CardHeader } from "../components/ui/card";
+import { Badge } from "../components/ui/badge";
 
-/** JWT token 存储 */
 const TOKEN_KEY = "admin_token";
 
 const isLoggedIn = ref(false);
@@ -122,6 +125,15 @@ function formatTime(ts: number): string {
   return new Date(ts).toLocaleString("zh-CN");
 }
 
+function statusBadgeClass(status: string): string {
+  switch (status) {
+    case "uploading": return "bg-amber-100 text-amber-800 border-amber-200";
+    case "ready": return "bg-green-100 text-green-800 border-green-200";
+    case "downloading": return "bg-blue-100 text-blue-800 border-blue-200";
+    default: return "bg-gray-100 text-gray-600";
+  }
+}
+
 onMounted(() => {
   const token = localStorage.getItem(TOKEN_KEY);
   if (token) {
@@ -132,234 +144,73 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="admin-page">
-    <h1 class="title">管理面板</h1>
+  <div class="mx-auto max-w-[720px] px-4 py-8">
+    <h1 class="mb-8 text-center text-2xl font-bold">管理面板</h1>
 
     <!-- 登录表单 -->
-    <div v-if="!isLoggedIn" class="login-section">
-      <div class="login-form">
-        <input
+    <div v-if="!isLoggedIn" class="mx-auto mt-8 max-w-[360px]">
+      <div class="flex gap-3">
+        <Input
           v-model="password"
           type="password"
-          class="password-input"
           placeholder="请输入管理员密码"
+          class="flex-1"
           @keyup.enter="handleLogin"
         />
-        <button
-          class="btn btn-login"
-          :disabled="!password || isLoading"
-          @click="handleLogin"
-        >
+        <Button :disabled="!password || isLoading" @click="handleLogin">
           {{ isLoading ? "登录中..." : "登录" }}
-        </button>
+        </Button>
       </div>
-      <div v-if="loginError" class="error-message">{{ loginError }}</div>
+      <div
+        v-if="loginError"
+        class="mt-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600"
+      >
+        {{ loginError }}
+      </div>
     </div>
 
     <!-- 管理面板内容 -->
     <div v-if="isLoggedIn" class="dashboard">
-      <div class="toolbar">
-        <button class="btn btn-logout" @click="handleLogout">退出登录</button>
-        <button class="btn btn-refresh" @click="loadData">刷新</button>
+      <div class="mb-8 flex gap-3">
+        <Button variant="destructive" @click="handleLogout">退出登录</Button>
+        <Button variant="secondary" @click="loadData">刷新</Button>
       </div>
 
       <!-- 活跃传输 -->
-      <section class="section">
-        <h2>活跃传输 ({{ sessions.length }})</h2>
-        <div v-if="sessions.length === 0" class="empty">暂无活跃传输</div>
-        <div v-for="s in sessions" :key="s.code" class="session-card">
-          <div class="session-header">
-            <span class="session-code">{{ s.code }}</span>
-            <span class="session-status" :class="s.status">{{ s.status }}</span>
-            <span class="session-ip">{{ s.creatorIP }}</span>
-          </div>
-          <div class="session-files">
-            <div v-for="f in s.files" :key="f.fileId" class="session-file">
-              {{ f.filename }} ({{ formatSize(f.size) }})
+      <section>
+        <h2 class="mb-4 text-lg font-semibold">活跃传输 ({{ sessions.length }})</h2>
+        <p v-if="sessions.length === 0" class="italic text-gray-400">暂无活跃传输</p>
+        <Card v-for="s in sessions" :key="s.code" class="mb-3">
+          <CardHeader class="pb-0">
+            <div class="flex items-center gap-3">
+              <span class="font-mono text-lg font-bold">{{ s.code }}</span>
+              <Badge variant="outline" :class="statusBadgeClass(s.status)">{{ s.status }}</Badge>
+              <span class="ml-auto text-xs text-gray-400">{{ s.creatorIP }}</span>
             </div>
-          </div>
-          <div class="session-meta">
-            <span>总大小: {{ formatSize(s.totalSize) }}</span>
-            <span>下载: {{ s.downloadCount }}/{{ s.maxDownloads }}</span>
-            <span>创建: {{ formatTime(s.createdAt) }}</span>
-            <span>过期: {{ formatTime(s.expiresAt) }}</span>
-          </div>
-          <button class="btn btn-terminate" @click="handleTerminate(s.code)">
-            强制终止
-          </button>
-        </div>
+          </CardHeader>
+          <CardContent class="pt-3">
+            <div class="mb-2">
+              <p v-for="f in s.files" :key="f.fileId" class="text-sm text-gray-600">
+                {{ f.filename }} ({{ formatSize(f.size) }})
+              </p>
+            </div>
+            <div class="mb-3 flex flex-wrap gap-4 text-xs text-gray-400">
+              <span>总大小: {{ formatSize(s.totalSize) }}</span>
+              <span>下载: {{ s.downloadCount }}/{{ s.maxDownloads }}</span>
+              <span>创建: {{ formatTime(s.createdAt) }}</span>
+              <span>过期: {{ formatTime(s.expiresAt) }}</span>
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              class="border-red-200 bg-red-50 text-red-600 hover:bg-red-100"
+              @click="handleTerminate(s.code)"
+            >
+              强制终止
+            </Button>
+          </CardContent>
+        </Card>
       </section>
     </div>
   </div>
 </template>
-
-<style scoped>
-.admin-page {
-  max-width: 720px;
-  margin: 0 auto;
-  padding: 2rem 1rem;
-}
-
-.title {
-  font-size: 1.75rem;
-  font-weight: 700;
-  margin-bottom: 2rem;
-  text-align: center;
-}
-
-.login-section {
-  max-width: 360px;
-  margin: 2rem auto;
-}
-
-.login-form {
-  display: flex;
-  gap: 0.75rem;
-}
-
-.password-input {
-  flex: 1;
-  padding: 0.75rem 1rem;
-  font-size: 1rem;
-  border: 2px solid #ddd;
-  border-radius: 8px;
-  outline: none;
-}
-
-.password-input:focus {
-  border-color: #4a90d9;
-}
-
-.btn {
-  padding: 0.625rem 1.25rem;
-  border: none;
-  border-radius: 8px;
-  font-size: 0.9rem;
-  cursor: pointer;
-}
-
-.btn-login {
-  background: #4a90d9;
-  color: white;
-}
-
-.btn-login:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.error-message {
-  margin-top: 1rem;
-  padding: 0.75rem;
-  background: #fef2f2;
-  border: 1px solid #fecaca;
-  border-radius: 8px;
-  color: #dc2626;
-}
-
-.toolbar {
-  display: flex;
-  gap: 0.75rem;
-  margin-bottom: 2rem;
-}
-
-.btn-logout {
-  background: #ef4444;
-  color: white;
-}
-
-.btn-refresh {
-  background: #f3f4f6;
-  color: #374151;
-}
-
-.section {
-  margin-bottom: 2rem;
-}
-
-.section h2 {
-  font-size: 1.25rem;
-  margin-bottom: 1rem;
-}
-
-.empty {
-  color: #999;
-  font-style: italic;
-}
-
-.session-card {
-  border: 1px solid #e5e7eb;
-  border-radius: 8px;
-  padding: 1rem;
-  margin-bottom: 0.75rem;
-}
-
-.session-header {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  margin-bottom: 0.5rem;
-}
-
-.session-code {
-  font-weight: 700;
-  font-family: monospace;
-  font-size: 1.1rem;
-}
-
-.session-status {
-  font-size: 0.75rem;
-  padding: 0.125rem 0.5rem;
-  border-radius: 4px;
-  background: #e5e7eb;
-}
-
-.session-status.uploading {
-  background: #fef3c7;
-  color: #92400e;
-}
-
-.session-status.ready {
-  background: #d1fae5;
-  color: #065f46;
-}
-
-.session-status.downloading {
-  background: #dbeafe;
-  color: #1e40af;
-}
-
-.session-ip {
-  margin-left: auto;
-  font-size: 0.8rem;
-  color: #999;
-}
-
-.session-files {
-  margin-bottom: 0.5rem;
-}
-
-.session-file {
-  font-size: 0.85rem;
-  color: #666;
-}
-
-.session-meta {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 1rem;
-  font-size: 0.8rem;
-  color: #999;
-  margin-bottom: 0.75rem;
-}
-
-.btn-terminate {
-  background: #fef2f2;
-  color: #dc2626;
-  border: 1px solid #fecaca;
-}
-
-.btn-terminate:hover {
-  background: #fee2e2;
-}
-</style>

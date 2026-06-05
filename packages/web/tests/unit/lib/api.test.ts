@@ -20,7 +20,7 @@ describe("createSession", () => {
         files: [{ fileId: "file_0", filename: "test.txt", uploadUrl: "/api/upload/A3K9M2/file_0/part" }],
         expiresAt: Date.now() + 3600000,
       }),
-    });
+    } as unknown as Response);
 
     const result = await api.createSession([
       { filename: "test.txt", size: 1024 },
@@ -45,7 +45,7 @@ describe("createSession", () => {
         code: "FILE_TOO_LARGE",
         message: "文件过大",
       }),
-    });
+    } as unknown as Response);
 
     await expect(
       api.createSession([{ filename: "huge.bin", size: 999999999 }]),
@@ -68,7 +68,7 @@ describe("getSession", () => {
         remainingDownloads: 18,
         status: "ready",
       }),
-    });
+    } as unknown as Response);
 
     const result = await api.getSession("A3K9M2");
 
@@ -88,7 +88,7 @@ describe("getSession", () => {
         code: "SESSION_NOT_FOUND",
         message: "分享码无效",
       }),
-    });
+    } as unknown as Response);
 
     await expect(api.getSession("XXXXXX")).rejects.toThrow("分享码无效");
   });
