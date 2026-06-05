@@ -3,7 +3,11 @@ import { verifyJwt } from "../utils/jwt";
 import { AppError } from "../utils/error";
 import {
   adminLogin,
+  changePassword,
   getAdminConfig,
+  getDefaultPassword,
+  getSiteConfig,
+  isDefaultPassword,
   updateAdminConfig,
   listActiveSessions,
   terminateSession,
@@ -35,8 +39,9 @@ async function requireAdmin(c: { req: { header: (name: string) => string | undef
 app.post("/api/admin/login", async (c) => {
   const { password } = await c.req.json<{ password: string }>();
   const secret = getSecret(c.env);
+  const defaultPassword = getDefaultPassword(c.env);
 
-  const result = await adminLogin(password, { FILE_KV: c.env.FILE_KV }, secret);
+  const result = await adminLogin(password, { FILE_KV: c.env.FILE_KV }, secret, defaultPassword);
   return c.json(result);
 });
 
@@ -71,6 +76,33 @@ app.delete("/api/admin/sessions/:code", async (c) => {
     FILE_BUCKET: c.env.FILE_BUCKET,
   });
   return c.json(result);
+});
+
+// PUT /api/admin/password
+app.put("/api/admin/password", async (c) => {
+  await requireAdmin(c);
+  const { currentPassword, newPassword } = await c.req.json<{
+    currentPassword: string;
+    newPassword: string;
+  }>();
+  const result = await changePassword(currentPassword, newPassword, {
+    FILE_KV: c.env.FILE_KV,
+  });
+  return c.json(result);
+});
+
+// GET /api/admin/check-default
+app.get("/api/admin/check-default", async (c) => {
+  await requireAdmin(c);
+  const defaultPassword = getDefaultPassword(c.env);
+  const result = await isDefaultPassword({ FILE_KV: c.env.FILE_KV }, defaultPassword);
+  return c.json({ isDefault: result });
+});
+
+// GET /api/site/config（公开，无需认证）
+app.get("/api/site/config", async (c) => {
+  const config = await getSiteConfig({ FILE_KV: c.env.FILE_KV });
+  return c.json(config);
 });
 
 export default app;

@@ -6,6 +6,7 @@ interface __BaseEnv_CloudflareBindings {
 	FILE_BUCKET: R2Bucket;
 	ASSETS: Fetcher;
 	ADMIN_JWT_SECRET: "dev-placeholder";
+	ADMIN_DEFAULT_PASSWORD: string;
 	SIGNALING: DurableObjectNamespace<import("./src/index").SignalingDO>;
 }
 declare namespace Cloudflare {
@@ -20,7 +21,7 @@ type StringifyValues<EnvType extends Record<string, unknown>> = {
 	[Binding in keyof EnvType]: EnvType[Binding] extends string ? EnvType[Binding] : string;
 };
 declare namespace NodeJS {
-	interface ProcessEnv extends StringifyValues<Pick<Cloudflare.Env, "ADMIN_JWT_SECRET">> {}
+	interface ProcessEnv extends StringifyValues<Pick<Cloudflare.Env, "ADMIN_JWT_SECRET" | "ADMIN_DEFAULT_PASSWORD">> {}
 }
 
 // Begin runtime types

@@ -49,6 +49,21 @@ export interface AdminConfig {
   maxDownloads: number;
   /** 单 IP 每分钟最多分享数，默认 10 */
   rateLimitPerMinute: number;
+  /** 文本分享最大大小（bytes），默认 1MB */
+  maxTextSize: number;
+  /** 站点标题（浏览器标签页），默认 "File Share" */
+  siteTitle: string;
+  /** 站点副标题/描述（SEO），默认 "" */
+  siteDescription: string;
+  /** 自定义页脚公告，默认 ""（空=使用内置 i18n） */
+  footerNotice: string;
+}
+
+/** 公开站点配置（从 AdminConfig 提取，无需认证即可读取） */
+export interface SiteConfig {
+  siteTitle: string;
+  siteDescription: string;
+  footerNotice: string;
 }
 
 /** 默认管理员配置 */
@@ -59,4 +74,8 @@ export const DEFAULT_ADMIN_CONFIG: AdminConfig = {
   ttlSeconds: 3600, // 1 hour
   maxDownloads: 20,
   rateLimitPerMinute: 10,
+  maxTextSize: 1 * 1024 * 1024, // 1MB
+  siteTitle: "File Share",
+  siteDescription: "",
+  footerNotice: "",
 };

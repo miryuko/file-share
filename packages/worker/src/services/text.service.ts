@@ -1,5 +1,7 @@
 import { generateCode } from "../utils/code";
 import { AppError } from "../utils/error";
+import { getAdminConfig } from "./admin.service";
+import { DEFAULT_ADMIN_CONFIG } from "../models/session";
 
 /** 文本分享条目 */
 interface TextEntry {
@@ -8,10 +10,6 @@ interface TextEntry {
   createdAt: number;
   expiresAt: number;
 }
-
-/** 文本大小限制 */
-const MAX_TEXT_SIZE = 1 * 1024 * 1024; // 1MB
-const TTL_SECONDS = 3600; // 1 hour
 
 /**
  * 创建文本分享
@@ -25,18 +23,23 @@ export async function createTextShare(
   content: string,
   env: { FILE_KV: KVNamespace },
 ): Promise<{ code: string; expiresAt: number }> {
+  // 从管理员配置读取限制（配置读取失败时使用默认值兜底）
+  const config = await getAdminConfig(env).catch(() => DEFAULT_ADMIN_CONFIG);
+  const maxTextSize = config.maxTextSize;
+
   // 校验
   if (!content || content.trim().length === 0) {
     throw new AppError("TEXT_EMPTY", 400, "请输入要分享的文本内容");
   }
 
   const contentBytes = new TextEncoder().encode(content);
-  if (contentBytes.byteLength > MAX_TEXT_SIZE) {
+  if (contentBytes.byteLength > maxTextSize) {
     const sizeMB = (contentBytes.byteLength / (1024 * 1024)).toFixed(1);
+    const limitMB = (maxTextSize / (1024 * 1024)).toFixed(0);
     throw new AppError(
       "TEXT_TOO_LARGE",
       400,
-      `文本过长（${sizeMB}MB），当前限制 1MB，请使用文件传输`,
+      `文本过长（${sizeMB}MB），当前限制 ${limitMB}MB，请使用文件传输`,
     );
   }
 
@@ -57,16 +60,18 @@ export async function createTextShare(
   }
 
   const now = Date.now();
+  const ttlSeconds = config.ttlSeconds;
+
   const entry: TextEntry = {
     code,
     content,
     createdAt: now,
-    expiresAt: now + TTL_SECONDS * 1000,
+    expiresAt: now + ttlSeconds * 1000,
   };
 
   try {
     await env.FILE_KV.put(`text:${code}`, JSON.stringify(entry), {
-      expirationTtl: TTL_SECONDS,
+      expirationTtl: ttlSeconds,
     });
   } catch {
     throw new AppError("STORAGE_ERROR", 503, "服务异常，请稍后重试");

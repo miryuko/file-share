@@ -1,4 +1,4 @@
-import type { AdminConfig, Session } from "../models/session";
+import type { AdminConfig, Session, SiteConfig } from "../models/session";
 import { DEFAULT_ADMIN_CONFIG } from "../models/session";
 import { AppError } from "../utils/error";
 import { signJwt } from "../utils/jwt";
@@ -7,13 +7,20 @@ import { hashPassword, verifyPassword } from "../utils/password";
 const MAX_LOGIN_ATTEMPTS = 5;
 const LOGIN_LOCKOUT_SECONDS = 300; // 5 分钟
 
+/** 从环境变量获取默认密码，未配置时使用 "123456" */
+export function getDefaultPassword(env: { ADMIN_DEFAULT_PASSWORD?: string }): string {
+  return env.ADMIN_DEFAULT_PASSWORD || "123456";
+}
+
 /**
  * 管理员登录
  *
  * 验证密码，签发 JWT token（有效期 24 小时）。
- * 首次访问时用默认密码 admin123 初始化（哈希存储）。
+ * 首次访问时用默认密码初始化（哈希存储）。
  * 5 次失败后锁定 5 分钟。
  *
+ * @param defaultPassword — 环境配置的默认密码，用于首次初始化及检测
+ * @returns token 和 needsPasswordChange（是否使用了默认密码需要强制修改）
  * @throws {AppError} INVALID_PASSWORD — 密码错误
  * @throws {AppError} ACCOUNT_LOCKED — 登录尝试超限
  */
@@ -21,7 +28,8 @@ export async function adminLogin(
   password: string,
   env: { FILE_KV: KVNamespace },
   secret: string,
-): Promise<{ token: string }> {
+  defaultPassword: string,
+): Promise<{ token: string; needsPasswordChange: boolean }> {
   // 检查锁定状态
   const lockKey = "admin:login_lock";
   const lockData = await env.FILE_KV.get(lockKey);
@@ -38,12 +46,14 @@ export async function adminLogin(
   }
 
   const storedHash = await env.FILE_KV.get("admin:password");
+  let isDefault = false;
 
   if (!storedHash) {
     // 首次使用：哈希存储默认密码
-    if (password === "admin123") {
+    if (password === defaultPassword) {
       const hashed = await hashPassword(password);
       await env.FILE_KV.put("admin:password", hashed);
+      isDefault = true;
     } else {
       await recordFailedAttempt(env);
       throw new AppError("INVALID_PASSWORD", 401, "密码错误，请重试");
@@ -55,6 +65,8 @@ export async function adminLogin(
       await recordFailedAttempt(env);
       throw new AppError("INVALID_PASSWORD", 401, "密码错误，请重试");
     }
+    // 检查是否使用了默认密码
+    isDefault = await verifyPassword(defaultPassword, storedHash);
   }
 
   // 清除锁定记录
@@ -72,9 +84,10 @@ export async function adminLogin(
 
   console.log(JSON.stringify({
     event: "admin.login",
+    needsPasswordChange: isDefault,
   }));
 
-  return { token };
+  return { token, needsPasswordChange: isDefault };
 }
 
 /**
@@ -214,4 +227,84 @@ export async function terminateSession(
   }));
 
   return { code, status: "terminated" };
+}
+
+/**
+ * 修改管理员密码
+ *
+ * 验证当前密码后，用 PBKDF2 哈希存储新密码。
+ *
+ * @throws {AppError} INVALID_PASSWORD — 当前密码错误
+ * @throws {AppError} SAME_PASSWORD — 新密码与当前密码相同
+ * @throws {AppError} EMPTY_PASSWORD — 新密码为空
+ * @throws {AppError} STORAGE_ERROR — KV 写入失败
+ */
+export async function changePassword(
+  currentPassword: string,
+  newPassword: string,
+  env: { FILE_KV: KVNamespace },
+): Promise<{ success: boolean }> {
+  if (!newPassword || newPassword.trim().length === 0) {
+    throw new AppError("EMPTY_PASSWORD", 400, "新密码不能为空");
+  }
+
+  const storedHash = await env.FILE_KV.get("admin:password");
+
+  // 如果是首次设置（无存储密码），允许直接设置
+  if (storedHash) {
+    const isValid = await verifyPassword(currentPassword, storedHash);
+    if (!isValid) {
+      throw new AppError("INVALID_PASSWORD", 400, "当前密码错误");
+    }
+
+    if (currentPassword === newPassword) {
+      throw new AppError("SAME_PASSWORD", 400, "新密码不能与当前密码相同");
+    }
+  }
+
+  const newHash = await hashPassword(newPassword);
+  await env.FILE_KV.put("admin:password", newHash);
+
+  console.log(JSON.stringify({
+    event: "admin.password.changed",
+  }));
+
+  return { success: true };
+}
+
+/**
+ * 检查是否仍在使用默认密码
+ *
+ * @param defaultPassword — 环境配置的默认密码
+ * @returns true 如果当前密码为默认密码或尚未设置密码
+ */
+export async function isDefaultPassword(
+  env: { FILE_KV: KVNamespace },
+  defaultPassword: string,
+): Promise<boolean> {
+  const storedHash = await env.FILE_KV.get("admin:password");
+
+  if (!storedHash) {
+    // 未设置密码 = 首次访问，使用默认密码
+    return true;
+  }
+
+  // 验证是否匹配默认密码
+  return verifyPassword(defaultPassword, storedHash);
+}
+
+/**
+ * 获取公开站点配置
+ *
+ * 从 admin:config 提取对外公开的外观配置子集，无需管理员认证。
+ */
+export async function getSiteConfig(
+  env: { FILE_KV: KVNamespace },
+): Promise<SiteConfig> {
+  const config = await getAdminConfig(env);
+  return {
+    siteTitle: config.siteTitle,
+    siteDescription: config.siteDescription,
+    footerNotice: config.footerNotice,
+  };
 }

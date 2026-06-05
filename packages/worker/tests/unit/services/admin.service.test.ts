@@ -1,9 +1,11 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { adminLogin, getAdminConfig, updateAdminConfig, listActiveSessions } from "../../../src/services/admin.service";
+import { adminLogin, changePassword, getAdminConfig, getSiteConfig, isDefaultPassword, updateAdminConfig, listActiveSessions } from "../../../src/services/admin.service";
+import { DEFAULT_ADMIN_CONFIG } from "../../../src/models/session";
 import { AppError } from "../../../src/utils/error";
 import { hashPassword } from "../../../src/utils/password";
 
 const TEST_SECRET = "test-admin-jwt-secret";
+const TEST_DEFAULT_PASSWORD = "123456";
 
 function createMockKV(store: Map<string, string>): KVNamespace {
   return {
@@ -33,12 +35,18 @@ describe("adminLogin", () => {
     mockKV = createMockKV(store);
   });
 
-  it("首次使用默认密码应成功登录并返回 token", async () => {
+  it("首次使用默认密码应成功登录并返回 token，标记需要改密", async () => {
     // 无 admin:password 键 = 首次使用
-    const result = await adminLogin("admin123", { FILE_KV: mockKV }, TEST_SECRET);
+    const result = await adminLogin(
+      TEST_DEFAULT_PASSWORD,
+      { FILE_KV: mockKV },
+      TEST_SECRET,
+      TEST_DEFAULT_PASSWORD,
+    );
 
     expect(result.token).toBeTruthy();
     expect(result.token.split(".")).toHaveLength(3);
+    expect(result.needsPasswordChange).toBe(true);
     // 密码应被哈希存储
     const stored = store.get("admin:password");
     expect(stored).toMatch(/^pbkdf2:/);
@@ -46,13 +54,13 @@ describe("adminLogin", () => {
 
   it("首次使用错误密码应抛出错误", async () => {
     await expect(
-      adminLogin("wrong", { FILE_KV: mockKV }, TEST_SECRET),
+      adminLogin("wrong", { FILE_KV: mockKV }, TEST_SECRET, TEST_DEFAULT_PASSWORD),
     ).rejects.toThrow(AppError);
   });
 
   it("首次使用错误密码应记录失败尝试", async () => {
     try {
-      await adminLogin("wrong", { FILE_KV: mockKV }, TEST_SECRET);
+      await adminLogin("wrong", { FILE_KV: mockKV }, TEST_SECRET, TEST_DEFAULT_PASSWORD);
     } catch { /* expected */ }
 
     const lockData = store.get("admin:login_lock");
@@ -65,8 +73,14 @@ describe("adminLogin", () => {
     const hashed = await hashPassword("mypassword");
     store.set("admin:password", hashed);
 
-    const result = await adminLogin("mypassword", { FILE_KV: mockKV }, TEST_SECRET);
+    const result = await adminLogin(
+      "mypassword",
+      { FILE_KV: mockKV },
+      TEST_SECRET,
+      TEST_DEFAULT_PASSWORD,
+    );
     expect(result.token).toBeTruthy();
+    expect(result.needsPasswordChange).toBe(false);
   });
 
   it("哈希存储后错误密码应失败", async () => {
@@ -74,8 +88,22 @@ describe("adminLogin", () => {
     store.set("admin:password", hashed);
 
     await expect(
-      adminLogin("wrong", { FILE_KV: mockKV }, TEST_SECRET),
+      adminLogin("wrong", { FILE_KV: mockKV }, TEST_SECRET, TEST_DEFAULT_PASSWORD),
     ).rejects.toThrow(AppError);
+  });
+
+  it("使用默认密码登录已初始化的账户时应返回 needsPasswordChange", async () => {
+    const hashed = await hashPassword(TEST_DEFAULT_PASSWORD);
+    store.set("admin:password", hashed);
+
+    const result = await adminLogin(
+      TEST_DEFAULT_PASSWORD,
+      { FILE_KV: mockKV },
+      TEST_SECRET,
+      TEST_DEFAULT_PASSWORD,
+    );
+    expect(result.token).toBeTruthy();
+    expect(result.needsPasswordChange).toBe(true);
   });
 });
 
@@ -173,5 +201,157 @@ describe("listActiveSessions", () => {
     const result = await listActiveSessions({ FILE_KV: mockKV });
     expect(result.sessions).toEqual([]);
     expect(result.total).toBe(0);
+  });
+});
+
+describe("changePassword", () => {
+  let store: Map<string, string>;
+  let mockKV: KVNamespace;
+
+  beforeEach(() => {
+    store = new Map();
+    mockKV = createMockKV(store);
+  });
+
+  it("修改密码成功后应哈希存储新密码", async () => {
+    // 先设置一个初始密码
+    const { hashPassword } = await import("../../../src/utils/password");
+    const initialHash = await hashPassword("oldpassword");
+    store.set("admin:password", initialHash);
+
+    const result = await changePassword("oldpassword", "newpassword", {
+      FILE_KV: mockKV,
+    });
+
+    expect(result.success).toBe(true);
+    const newHash = store.get("admin:password");
+    expect(newHash).toMatch(/^pbkdf2:/);
+    expect(newHash).not.toBe(initialHash);
+  });
+
+  it("当前密码错误时应抛出错误", async () => {
+    const { hashPassword } = await import("../../../src/utils/password");
+    store.set("admin:password", await hashPassword("correct"));
+
+    await expect(
+      changePassword("wrong", "newpassword", { FILE_KV: mockKV }),
+    ).rejects.toThrow(AppError);
+  });
+
+  it("新密码与当前密码相同时应抛出错误", async () => {
+    const { hashPassword } = await import("../../../src/utils/password");
+    store.set("admin:password", await hashPassword("samepass"));
+
+    await expect(
+      changePassword("samepass", "samepass", { FILE_KV: mockKV }),
+    ).rejects.toThrow(AppError);
+  });
+
+  it("新密码为空时应抛出错误", async () => {
+    await expect(
+      changePassword("current", "", { FILE_KV: mockKV }),
+    ).rejects.toThrow(AppError);
+  });
+});
+
+describe("isDefaultPassword", () => {
+  let store: Map<string, string>;
+  let mockKV: KVNamespace;
+
+  beforeEach(() => {
+    store = new Map();
+    mockKV = createMockKV(store);
+  });
+
+  it("未设置密码时返回 true", async () => {
+    const result = await isDefaultPassword({ FILE_KV: mockKV }, TEST_DEFAULT_PASSWORD);
+    expect(result).toBe(true);
+  });
+
+  it("密码为默认密码 123456 时返回 true", async () => {
+    const { hashPassword } = await import("../../../src/utils/password");
+    store.set("admin:password", await hashPassword(TEST_DEFAULT_PASSWORD));
+
+    const result = await isDefaultPassword({ FILE_KV: mockKV }, TEST_DEFAULT_PASSWORD);
+    expect(result).toBe(true);
+  });
+
+  it("密码为自定义密码时返回 false", async () => {
+    const { hashPassword } = await import("../../../src/utils/password");
+    store.set("admin:password", await hashPassword("custompw"));
+
+    const result = await isDefaultPassword({ FILE_KV: mockKV }, TEST_DEFAULT_PASSWORD);
+    expect(result).toBe(false);
+  });
+
+  it("自定义默认密码时正确识别", async () => {
+    const { hashPassword } = await import("../../../src/utils/password");
+    store.set("admin:password", await hashPassword("mydefault123"));
+
+    const result = await isDefaultPassword({ FILE_KV: mockKV }, "mydefault123");
+    expect(result).toBe(true);
+  });
+});
+
+describe("getSiteConfig", () => {
+  let store: Map<string, string>;
+  let mockKV: KVNamespace;
+
+  beforeEach(() => {
+    store = new Map();
+    mockKV = createMockKV(store);
+  });
+
+  it("无配置时返回默认值", async () => {
+    const config = await getSiteConfig({ FILE_KV: mockKV });
+    expect(config.siteTitle).toBe("File Share");
+    expect(config.siteDescription).toBe("");
+    expect(config.footerNotice).toBe("");
+  });
+
+  it("有自定义配置时返回对应值", async () => {
+    store.set(
+      "admin:config",
+      JSON.stringify({
+        siteTitle: "My Share",
+        siteDescription: "A great sharing site",
+        footerNotice: "© 2024 My Share",
+      }),
+    );
+
+    const config = await getSiteConfig({ FILE_KV: mockKV });
+    expect(config.siteTitle).toBe("My Share");
+    expect(config.siteDescription).toBe("A great sharing site");
+    expect(config.footerNotice).toBe("© 2024 My Share");
+  });
+
+  it("仅返回公开字段，不泄露敏感配置", async () => {
+    store.set(
+      "admin:config",
+      JSON.stringify({
+        maxFileSize: 1024,
+        siteTitle: "Secure Share",
+      }),
+    );
+
+    const config = await getSiteConfig({ FILE_KV: mockKV });
+    expect(config.siteTitle).toBe("Secure Share");
+    // 确保不包含管理员专属字段
+    expect((config as Record<string, unknown>).maxFileSize).toBeUndefined();
+  });
+});
+
+describe("DEFAULT_ADMIN_CONFIG 新增字段", () => {
+  it("应包含 maxTextSize 默认值", () => {
+    expect(DEFAULT_ADMIN_CONFIG.maxTextSize).toBe(1 * 1024 * 1024);
+  });
+
+  it("应包含 siteTitle 默认值", () => {
+    expect(DEFAULT_ADMIN_CONFIG.siteTitle).toBe("File Share");
+  });
+
+  it("应包含 siteDescription 和 footerNotice 默认值", () => {
+    expect(DEFAULT_ADMIN_CONFIG.siteDescription).toBe("");
+    expect(DEFAULT_ADMIN_CONFIG.footerNotice).toBe("");
   });
 });
