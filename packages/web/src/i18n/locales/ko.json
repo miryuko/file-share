@@ -22,7 +22,7 @@
     "tabFile": "파일",
     "tabText": "텍스트",
     "dropZone": "클릭하여 파일 선택 또는 드래그 앤 드롭",
-    "fileLimits": "모든 파일 형식, 파일당 최대 100MB, 총 500MB",
+    "fileLimits": "모든 파일 형식, 파일당 최대 {maxFileSize}MB, 총 {maxTotalSize}MB",
     "textPlaceholder": "텍스트를 붙여넣거나 입력하세요 (최대 1MB)...",
     "sending": "전송 중...",
     "sendText": "텍스트 전송",
@@ -43,7 +43,7 @@
       "fileTooBig": "파일 \"{name}\"이(가) {limit}MB 제한을 초과합니다",
       "totalTooBig": "총 파일 크기가 {limit}MB 제한을 초과합니다",
       "textEmpty": "공유할 텍스트를 입력하세요",
-      "textTooLong": "텍스트가 너무 깁니다 ({size}MB), 제한은 1MB입니다. 파일 전송을 사용하세요"
+      "textTooLong": "텍스트가 너무 깁니다 ({count} 자), 제한은 {limit} 자입니다"
     }
   },
   "receive": {
@@ -94,14 +94,15 @@
     "footerNotice": "푸터 공지",
     "footerNoticePlaceholder": "사용자 정의 푸터 텍스트 (비워두면 기본값 사용)",
     "uploadSection": "업로드 제한",
-    "maxFileSizeMB": "파일당 최대 크기 (MB)",
-    "maxTotalSizeMB": "최대 총 크기 (MB)",
+    "maxFileSizeMB": "파일당 최대 크기",
+    "maxTotalSizeMB": "최대 총 크기",
     "maxFiles": "공유당 최대 파일 수",
     "maxDownloadsCfg": "최대 다운로드 수",
-    "ttlMinutes": "만료 시간 (분)",
-    "rateLimitPerMinute": "분당 속도 제한",
+    "ttlMinutes": "만료 시간",
+    "rateLimitPerMinute": "속도 제한",
     "textSection": "텍스트 공유",
-    "maxTextSizeMB": "최대 텍스트 크기 (MB)",
+    "maxTextChars": "최대 텍스트 문자 수",
+    "unlimited": "무제한",
     "saving": "저장 중...",
     "saveConfig": "설정 저장",
     "configSaved": "설정이 저장되었습니다!",

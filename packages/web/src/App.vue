@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { onMounted, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { RouterLink, RouterView } from 'vue-router'
 import { Globe } from 'lucide-vue-next'
@@ -10,8 +11,23 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import ModeToggle from '@/components/ModeToggle.vue'
+import { useSiteConfig } from '@/composables/useSiteConfig'
 
-const { locale } = useI18n()
+const { t, locale } = useI18n()
+const { config, load } = useSiteConfig()
+
+onMounted(() => {
+  load()
+})
+
+// 动态设置浏览器标签页标题
+watch(
+  () => config.value.siteTitle,
+  (title) => {
+    document.title = title || t('app.title')
+  },
+  { immediate: true },
+)
 
 interface LocaleOption {
   code: string
@@ -83,7 +99,7 @@ function currentNativeName(): string {
     </main>
 
     <footer class="border-t px-4 py-6 text-center text-xs text-muted-foreground">
-      <p>{{ $t('app.footer.notice') }}</p>
+      <p>{{ config.footerNotice || $t('app.footer.notice') }}</p>
     </footer>
   </div>
 </template>

@@ -30,7 +30,7 @@ const session = ref<{
 
 const textResult = ref<{ content: string; expiresAt: number } | null>(null);
 const textCopied = ref(false);
-const encoder = new TextEncoder();
+
 
 // 自动过滤和转大写
 watch(codeInput, (val) => {
@@ -214,7 +214,7 @@ defineExpose({ codeInput });
       </Card>
       <div class="mb-4 flex justify-between text-xs text-muted-foreground">
         <span>{{ formatExpiry(textResult.expiresAt) }}</span>
-        <span>{{ encoder.encode(textResult.content).byteLength.toLocaleString() }} bytes</span>
+        <span>{{ [...textResult.content].length.toLocaleString() }} chars</span>
       </div>
       <Button class="mb-4" @click="copyTextContent">
         {{ textCopied ? $t('receive.copied') : $t('receive.copy') }}

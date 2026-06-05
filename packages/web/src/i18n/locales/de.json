@@ -22,7 +22,7 @@
     "tabFile": "Datei",
     "tabText": "Text",
     "dropZone": "Klicken Sie, um Dateien auszuwählen oder hierher zu ziehen",
-    "fileLimits": "Alle Dateitypen, max. 100MB pro Datei, 500MB insgesamt",
+    "fileLimits": "Alle Dateitypen, max. {maxFileSize}MB pro Datei, {maxTotalSize}MB insgesamt",
     "textPlaceholder": "Text hier einfügen oder eingeben (max. 1MB)...",
     "sending": "Wird gesendet...",
     "sendText": "Text senden",
@@ -43,7 +43,7 @@
       "fileTooBig": "Datei \"{name}\" überschreitet das Limit von {limit}MB",
       "totalTooBig": "Gesamtgröße überschreitet das Limit von {limit}MB",
       "textEmpty": "Bitte geben Sie den zu teilenden Text ein",
-      "textTooLong": "Text zu lang ({size}MB), Limit ist 1MB, bitte Dateiübertragung verwenden"
+      "textTooLong": "Text zu lang ({count} Zeichen), Limit ist {limit} Zeichen"
     }
   },
   "receive": {
@@ -94,14 +94,15 @@
     "footerNotice": "Fußzeilentext",
     "footerNoticePlaceholder": "Benutzerdefinierter Fußzeilentext (leer = Standard)",
     "uploadSection": "Upload-Limits",
-    "maxFileSizeMB": "Max. Größe pro Datei (MB)",
-    "maxTotalSizeMB": "Max. Gesamtgröße (MB)",
+    "maxFileSizeMB": "Max. Größe pro Datei",
+    "maxTotalSizeMB": "Max. Gesamtgröße",
     "maxFiles": "Max. Dateien pro Freigabe",
     "maxDownloadsCfg": "Max. Downloads",
-    "ttlMinutes": "Ablaufzeit (Minuten)",
-    "rateLimitPerMinute": "Rate-Limit pro Minute",
+    "ttlMinutes": "Ablaufzeit",
+    "rateLimitPerMinute": "Rate-Limit",
     "textSection": "Textfreigabe",
-    "maxTextSizeMB": "Max. Textgröße (MB)",
+    "maxTextChars": "Max. Textzeichen",
+    "unlimited": "Unbegrenzt",
     "saving": "Speichern...",
     "saveConfig": "Einstellungen speichern",
     "configSaved": "Einstellungen gespeichert!",

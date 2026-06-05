@@ -22,7 +22,7 @@
     "tabFile": "File",
     "tabText": "Text",
     "dropZone": "Click to select files or drag and drop here",
-    "fileLimits": "Any file type, max 100MB per file, 500MB total",
+    "fileLimits": "Any file type, max {maxFileSize}MB per file, {maxTotalSize}MB total",
     "textPlaceholder": "Paste or type text content here (max 1MB)...",
     "sending": "Sending...",
     "sendText": "Send Text",
@@ -43,7 +43,7 @@
       "fileTooBig": "File \"{name}\" exceeds {limit}MB limit",
       "totalTooBig": "Total file size exceeds {limit}MB limit",
       "textEmpty": "Please enter text content to share",
-      "textTooLong": "Text too long ({size}MB), limit is 1MB, please use file transfer instead"
+      "textTooLong": "Text too long ({count} characters), limit is {limit} characters"
     }
   },
   "receive": {
@@ -94,14 +94,15 @@
     "footerNotice": "Footer Notice",
     "footerNoticePlaceholder": "Custom footer text (leave empty to use default)",
     "uploadSection": "Upload Limits",
-    "maxFileSizeMB": "Max Size per File (MB)",
-    "maxTotalSizeMB": "Max Total Size (MB)",
+    "maxFileSizeMB": "Max Size per File",
+    "maxTotalSizeMB": "Max Total Size",
     "maxFiles": "Max Files per Share",
     "maxDownloadsCfg": "Max Downloads",
-    "ttlMinutes": "Expiry Time (minutes)",
-    "rateLimitPerMinute": "Rate Limit per Minute",
+    "ttlMinutes": "Expiry Time",
+    "rateLimitPerMinute": "Rate Limit",
     "textSection": "Text Sharing",
-    "maxTextSizeMB": "Max Text Size (MB)",
+    "maxTextChars": "Max Text Characters",
+    "unlimited": "Unlimited",
     "saving": "Saving...",
     "saveConfig": "Save Config",
     "configSaved": "Configuration saved!",

@@ -22,7 +22,7 @@
     "tabFile": "ファイル",
     "tabText": "テキスト",
     "dropZone": "クリックしてファイルを選択、またはドラッグ＆ドロップ",
-    "fileLimits": "任意のファイル形式、1ファイル最大100MB、合計500MB",
+    "fileLimits": "任意のファイル形式、1ファイル最大{maxFileSize}MB、合計{maxTotalSize}MB",
     "textPlaceholder": "テキストを貼り付けまたは入力（最大1MB）...",
     "sending": "送信中...",
     "sendText": "テキストを送信",
@@ -43,7 +43,7 @@
       "fileTooBig": "ファイル \"{name}\" が{limit}MBの制限を超えています",
       "totalTooBig": "合計ファイルサイズが{limit}MBの制限を超えています",
       "textEmpty": "共有するテキストを入力してください",
-      "textTooLong": "テキストが長すぎます（{size}MB）、制限は1MBです。ファイル転送を使用してください"
+      "textTooLong": "テキストが長すぎます（{count} 文字）、制限は {limit} 文字です"
     }
   },
   "receive": {
@@ -94,14 +94,15 @@
     "footerNotice": "フッター通知",
     "footerNoticePlaceholder": "カスタムフッターテキスト（空の場合はデフォルト）",
     "uploadSection": "アップロード制限",
-    "maxFileSizeMB": "ファイルあたりの最大サイズ (MB)",
-    "maxTotalSizeMB": "最大合計サイズ (MB)",
+    "maxFileSizeMB": "ファイルあたりの最大サイズ",
+    "maxTotalSizeMB": "最大合計サイズ",
     "maxFiles": "共有あたりの最大ファイル数",
     "maxDownloadsCfg": "最大ダウンロード数",
-    "ttlMinutes": "有効期限 (分)",
-    "rateLimitPerMinute": "毎分のレート制限",
+    "ttlMinutes": "有効期限",
+    "rateLimitPerMinute": "レート制限",
     "textSection": "テキスト共有",
-    "maxTextSizeMB": "最大テキストサイズ (MB)",
+    "maxTextChars": "最大テキスト文字数",
+    "unlimited": "無制限",
     "saving": "保存中...",
     "saveConfig": "設定を保存",
     "configSaved": "設定が保存されました！",

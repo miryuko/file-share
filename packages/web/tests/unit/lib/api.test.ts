@@ -158,3 +158,46 @@ describe("getDownloadUrl", () => {
     expect(url).toBe("/api/download/A3K9M2/file_0");
   });
 });
+
+describe("getSiteConfig", () => {
+  beforeEach(() => {
+    mockFetch.mockReset();
+  });
+
+  it("应返回站点配置（含限制字段）", async () => {
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({
+        siteTitle: "My Share",
+        siteDescription: "A sharing site",
+        footerNotice: "",
+        maxFileSize: 200 * 1024 * 1024,
+        maxTotalSize: 1024 * 1024 * 1024,
+        maxFiles: 30,
+        maxTextSize: 2 * 1024 * 1024,
+      }),
+    } as unknown as Response);
+
+    const config = await api.getSiteConfig();
+
+    expect(config.siteTitle).toBe("My Share");
+    expect(config.maxFileSize).toBe(200 * 1024 * 1024);
+    expect(config.maxTotalSize).toBe(1024 * 1024 * 1024);
+    expect(config.maxFiles).toBe(30);
+    expect(config.maxTextSize).toBe(2 * 1024 * 1024);
+    expect(mockFetch).toHaveBeenCalledWith("/api/site/config", {});
+  });
+
+  it("当 API 返回错误时应抛出 ApiError", async () => {
+    mockFetch.mockResolvedValueOnce({
+      ok: false,
+      status: 500,
+      json: async () => ({
+        code: "INTERNAL",
+        message: "服务异常",
+      }),
+    } as unknown as Response);
+
+    await expect(api.getSiteConfig()).rejects.toThrow("服务异常");
+  });
+});

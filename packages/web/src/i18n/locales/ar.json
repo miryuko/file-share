@@ -22,7 +22,7 @@
     "tabFile": "ملف",
     "tabText": "نص",
     "dropZone": "انقر لتحديد الملفات أو اسحبها هنا",
-    "fileLimits": "أي نوع ملفات، الحد الأقصى 100MB لكل ملف، 500MB إجمالي",
+    "fileLimits": "أي نوع ملفات، الحد الأقصى {maxFileSize}MB لكل ملف، {maxTotalSize}MB إجمالي",
     "textPlaceholder": "الصق أو اكتب محتوى النص هنا (الحد الأقصى 1MB)...",
     "sending": "جاري الإرسال...",
     "sendText": "إرسال النص",
@@ -43,7 +43,7 @@
       "fileTooBig": "الملف \"{name}\" يتجاوز حد {limit}MB",
       "totalTooBig": "الحجم الإجمالي يتجاوز حد {limit}MB",
       "textEmpty": "يرجى إدخال محتوى نصي للمشاركة",
-      "textTooLong": "النص طويل جدًا ({size}MB)، الحد هو 1MB، يرجى استخدام نقل الملفات"
+      "textTooLong": "النص طويل جدًا ({count} حرف)، الحد هو {limit} حرف"
     }
   },
   "receive": {
@@ -94,14 +94,15 @@
     "footerNotice": "نص التذييل",
     "footerNoticePlaceholder": "نص تذييل مخصص (اتركه فارغًا للافتراضي)",
     "uploadSection": "حدود التحميل",
-    "maxFileSizeMB": "الحجم الأقصى لكل ملف (MB)",
-    "maxTotalSizeMB": "الحجم الإجمالي الأقصى (MB)",
+    "maxFileSizeMB": "الحجم الأقصى لكل ملف",
+    "maxTotalSizeMB": "الحجم الإجمالي الأقصى",
     "maxFiles": "الحد الأقصى للملفات لكل مشاركة",
     "maxDownloadsCfg": "الحد الأقصى للتحميلات",
-    "ttlMinutes": "وقت انتهاء الصلاحية (دقائق)",
-    "rateLimitPerMinute": "حد المعدل في الدقيقة",
+    "ttlMinutes": "وقت انتهاء الصلاحية",
+    "rateLimitPerMinute": "حد المعدل",
     "textSection": "مشاركة النص",
-    "maxTextSizeMB": "الحجم الأقصى للنص (MB)",
+    "maxTextChars": "الحد الأقصى لأحرف النص",
+    "unlimited": "غير محدود",
     "saving": "جاري الحفظ...",
     "saveConfig": "حفظ الإعدادات",
     "configSaved": "تم حفظ الإعدادات!",

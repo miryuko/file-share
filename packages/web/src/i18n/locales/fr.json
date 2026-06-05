@@ -22,7 +22,7 @@
     "tabFile": "Fichier",
     "tabText": "Texte",
     "dropZone": "Cliquez pour sélectionner des fichiers ou glissez-déposez ici",
-    "fileLimits": "Tout type de fichier, max 100MB par fichier, 500MB au total",
+    "fileLimits": "Tout type de fichier, max {maxFileSize}MB par fichier, {maxTotalSize}MB au total",
     "textPlaceholder": "Collez ou saisissez le contenu texte ici (max 1MB)...",
     "sending": "Envoi en cours...",
     "sendText": "Envoyer le texte",
@@ -43,7 +43,7 @@
       "fileTooBig": "Le fichier \"{name}\" dépasse la limite de {limit}MB",
       "totalTooBig": "La taille totale dépasse la limite de {limit}MB",
       "textEmpty": "Veuillez saisir le contenu texte à partager",
-      "textTooLong": "Texte trop long ({size}MB), limite de 1MB, utilisez le transfert de fichiers"
+      "textTooLong": "Texte trop long ({count} caractères), limite de {limit} caractères"
     }
   },
   "receive": {
@@ -94,14 +94,15 @@
     "footerNotice": "Texte de pied de page",
     "footerNoticePlaceholder": "Texte personnalisé du pied de page (vide = par défaut)",
     "uploadSection": "Limites de téléchargement",
-    "maxFileSizeMB": "Taille max par fichier (Mo)",
-    "maxTotalSizeMB": "Taille totale max (Mo)",
+    "maxFileSizeMB": "Taille max par fichier",
+    "maxTotalSizeMB": "Taille totale max",
     "maxFiles": "Nombre max de fichiers par partage",
     "maxDownloadsCfg": "Téléchargements max",
-    "ttlMinutes": "Durée d'expiration (minutes)",
-    "rateLimitPerMinute": "Limite de débit par minute",
+    "ttlMinutes": "Durée d'expiration",
+    "rateLimitPerMinute": "Limite de débit",
     "textSection": "Partage de texte",
-    "maxTextSizeMB": "Taille max du texte (Mo)",
+    "maxTextChars": "Max caractères du texte",
+    "unlimited": "Illimité",
     "saving": "Enregistrement...",
     "saveConfig": "Enregistrer la configuration",
     "configSaved": "Configuration enregistrée !",

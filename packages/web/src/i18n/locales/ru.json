@@ -22,7 +22,7 @@
     "tabFile": "Файл",
     "tabText": "Текст",
     "dropZone": "Нажмите для выбора файлов или перетащите сюда",
-    "fileLimits": "Любые типы файлов, макс. 100MB на файл, всего 500MB",
+    "fileLimits": "Любые типы файлов, макс. {maxFileSize}MB на файл, всего {maxTotalSize}MB",
     "textPlaceholder": "Вставьте или введите текст здесь (макс. 1MB)...",
     "sending": "Отправка...",
     "sendText": "Отправить текст",
@@ -43,7 +43,7 @@
       "fileTooBig": "Файл \"{name}\" превышает лимит {limit}MB",
       "totalTooBig": "Общий размер превышает лимит {limit}MB",
       "textEmpty": "Введите текст для отправки",
-      "textTooLong": "Текст слишком длинный ({size}MB), лимит 1MB, используйте передачу файлов"
+      "textTooLong": "Текст слишком длинный ({count} симв.), лимит {limit} симв."
     }
   },
   "receive": {
@@ -94,14 +94,15 @@
     "footerNotice": "Текст в подвале",
     "footerNoticePlaceholder": "Пользовательский текст в подвале (пусто = по умолчанию)",
     "uploadSection": "Ограничения загрузки",
-    "maxFileSizeMB": "Макс. размер файла (МБ)",
-    "maxTotalSizeMB": "Макс. общий размер (МБ)",
+    "maxFileSizeMB": "Макс. размер файла",
+    "maxTotalSizeMB": "Макс. общий размер",
     "maxFiles": "Макс. файлов за раз",
     "maxDownloadsCfg": "Макс. скачиваний",
-    "ttlMinutes": "Время жизни (минут)",
-    "rateLimitPerMinute": "Лимит запросов в минуту",
+    "ttlMinutes": "Время жизни",
+    "rateLimitPerMinute": "Лимит запросов",
     "textSection": "Обмен текстом",
-    "maxTextSizeMB": "Макс. размер текста (МБ)",
+    "maxTextChars": "Макс. символов текста",
+    "unlimited": "Без ограничений",
     "saving": "Сохранение...",
     "saveConfig": "Сохранить настройки",
     "configSaved": "Настройки сохранены!",

@@ -124,4 +124,22 @@ export async function getCodeInfo(code: string): Promise<CodeData> {
   return request<CodeData>(`/api/code/${code}`);
 }
 
+// ── 站点配置 ──
+
+/** 公开站点配置（从 GET /api/site/config 获取） */
+export interface SiteConfig {
+  siteTitle: string;
+  siteDescription: string;
+  footerNotice: string;
+  maxFileSize: number;
+  maxTotalSize: number;
+  maxFiles: number;
+  maxTextSize: number;
+}
+
+/** 获取公开站点配置（无需认证） */
+export async function getSiteConfig(): Promise<SiteConfig> {
+  return request<SiteConfig>("/api/site/config");
+}
+
 export { ApiError };

@@ -1,8 +1,9 @@
 <script setup lang="ts">
-import { ref, watch } from "vue";
+import { ref, watch, computed } from "vue";
 import { useI18n } from "vue-i18n";
 import { Upload } from "lucide-vue-next";
 import { useFileUpload } from "../composables/useFileUpload";
+import { useSiteConfig } from "../composables/useSiteConfig";
 import { ApiError } from "../lib/api";
 import { generateQRCodeDataURI } from "../lib/qrcode";
 import P2PTransfer from "../components/P2PTransfer.vue";
@@ -13,6 +14,14 @@ import { Progress } from "../components/ui/progress";
 import { Textarea } from "../components/ui/textarea";
 
 const { t } = useI18n();
+const { config } = useSiteConfig();
+
+/** 文件限制提示文案（读取后端配置的实际限制值） */
+const fileLimitsText = computed(() => {
+  const maxFileMB = (config.value.maxFileSize / (1024 * 1024)).toFixed(0);
+  const maxTotalMB = (config.value.maxTotalSize / (1024 * 1024)).toFixed(0);
+  return t('send.fileLimits', { maxFileSize: maxFileMB, maxTotalSize: maxTotalMB });
+});
 
 type ShareMode = "file" | "text";
 
@@ -48,28 +57,26 @@ watch(
     }
   },
 );
-const MAX_TEXT_SIZE = 1 * 1024 * 1024;
-const encoder = new TextEncoder();
-
-const MAX_TOTAL_SIZE = 500 * 1024 * 1024;
-const MAX_FILE_SIZE = 100 * 1024 * 1024;
-const MAX_FILES = 20;
 
 function validateFiles(selectedFiles: File[]): string | null {
+  const maxFiles = config.value.maxFiles;
+  const maxFileSize = config.value.maxFileSize;
+  const maxTotalSize = config.value.maxTotalSize;
+
   if (selectedFiles.length === 0) return t('send.validation.selectFile');
-  if (selectedFiles.length > MAX_FILES) return t('send.validation.maxFiles', { max: MAX_FILES });
+  if (selectedFiles.length > maxFiles) return t('send.validation.maxFiles', { max: maxFiles });
 
   for (const f of selectedFiles) {
     if (f.size <= 0) return t('send.validation.zeroSize', { name: f.name });
-    if (f.size > MAX_FILE_SIZE) {
-      const limitMB = (MAX_FILE_SIZE / (1024 * 1024)).toFixed(0);
+    if (f.size > maxFileSize) {
+      const limitMB = (maxFileSize / (1024 * 1024)).toFixed(0);
       return t('send.validation.fileTooBig', { name: f.name, limit: limitMB });
     }
   }
 
   const total = selectedFiles.reduce((s, f) => s + f.size, 0);
-  if (total > MAX_TOTAL_SIZE) {
-    const limitMB = (MAX_TOTAL_SIZE / (1024 * 1024)).toFixed(0);
+  if (total > maxTotalSize) {
+    const limitMB = (maxTotalSize / (1024 * 1024)).toFixed(0);
     return t('send.validation.totalTooBig', { limit: limitMB });
   }
 
@@ -128,10 +135,10 @@ async function handleTextSend(): Promise<void> {
     return;
   }
 
-  const bytes = encoder.encode(content);
-  if (bytes.byteLength > MAX_TEXT_SIZE) {
-    const sizeMB = (bytes.byteLength / (1024 * 1024)).toFixed(1);
-    textError.value = t('send.validation.textTooLong', { size: sizeMB });
+  const maxTextSize = config.value.maxTextSize;
+  const charCount = [...content].length;
+  if (maxTextSize !== -1 && charCount > maxTextSize) {
+    textError.value = t('send.validation.textTooLong', { count: charCount, limit: maxTextSize });
     return;
   }
 
@@ -204,7 +211,7 @@ function formatSize(bytes: number): string {
         >
           <Upload class="mx-auto mb-4 text-muted-foreground" :size="48" />
           <p class="mb-2 text-lg">{{ $t('send.dropZone') }}</p>
-          <p class="text-xs text-muted-foreground">{{ $t('send.fileLimits') }}</p>
+          <p class="text-xs text-muted-foreground">{{ fileLimitsText }}</p>
         </div>
         <input ref="fileInput" type="file" multiple class="hidden" @change="onFileChange" />
         <div
@@ -223,7 +230,7 @@ function formatSize(bytes: number): string {
         />
         <div class="flex items-center justify-between">
           <span class="text-xs text-muted-foreground">
-            {{ encoder.encode(textContent).byteLength.toLocaleString() }} bytes
+            {{ [...textContent].length.toLocaleString() }} chars
           </span>
           <Button :disabled="!textContent.trim() || textLoading" @click="handleTextSend">
             {{ textLoading ? $t('send.sending') : $t('send.sendText') }}

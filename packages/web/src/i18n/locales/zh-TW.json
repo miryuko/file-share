@@ -22,7 +22,7 @@
     "tabFile": "檔案",
     "tabText": "文字",
     "dropZone": "點擊選取檔案或拖曳到此處",
-    "fileLimits": "支援任意檔案，單檔最大 100MB，總大小 500MB",
+    "fileLimits": "支援任意檔案，單檔最大 {maxFileSize}MB，總大小 {maxTotalSize}MB",
     "textPlaceholder": "在此貼上或輸入文字內容（限 1MB）...",
     "sending": "傳送中...",
     "sendText": "傳送文字",
@@ -43,7 +43,7 @@
       "fileTooBig": "檔案「{name}」超過 {limit}MB 限制",
       "totalTooBig": "總檔案大小超過 {limit}MB 限制",
       "textEmpty": "請輸入要分享的文字內容",
-      "textTooLong": "文字過長（{size}MB），目前限制 1MB，請使用檔案傳輸"
+      "textTooLong": "文字過長（{count} 字元），目前限制 {limit} 字元"
     }
   },
   "receive": {
@@ -94,14 +94,15 @@
     "footerNotice": "頁腳公告",
     "footerNoticePlaceholder": "自訂頁腳文字（留空則使用預設）",
     "uploadSection": "上傳限制",
-    "maxFileSizeMB": "單檔最大大小 (MB)",
-    "maxTotalSizeMB": "總大小上限 (MB)",
+    "maxFileSizeMB": "單檔最大大小",
+    "maxTotalSizeMB": "總大小上限",
     "maxFiles": "單次最大檔案數",
     "maxDownloadsCfg": "最大下載次數",
-    "ttlMinutes": "過期時間 (分鐘)",
-    "rateLimitPerMinute": "每分鐘速率限制",
+    "ttlMinutes": "過期時間",
+    "rateLimitPerMinute": "速率限制",
     "textSection": "文字分享",
-    "maxTextSizeMB": "文字最大大小 (MB)",
+    "maxTextChars": "文字最大字元數",
+    "unlimited": "無限制",
     "saving": "儲存中...",
     "saveConfig": "儲存設定",
     "configSaved": "設定已儲存！",

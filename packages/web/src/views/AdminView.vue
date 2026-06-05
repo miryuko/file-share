@@ -7,6 +7,15 @@ import { Textarea } from "../components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card";
 import { Badge } from "../components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../components/ui/tabs";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger as SelectTriggerUi,
+  SelectValue,
+} from "../components/ui/select";
+import { Switch } from "../components/ui/switch";
+import { InputGroup, InputGroupInput, InputGroupAddon } from "../components/ui/input-group";
 
 const { t, locale } = useI18n();
 
@@ -50,21 +59,220 @@ const activeTab = ref("sessions");
 const isSavingConfig = ref(false);
 const configSaved = ref(false);
 
-// 编辑时以 MB 显示
-function toMB(bytes: number): number {
-  return Math.round((bytes / (1024 * 1024)) * 10) / 10;
+// 单位选项
+const SIZE_UNITS = [
+  { value: 1, label: "Bytes" },
+  { value: 1024, label: "KB" },
+  { value: 1024 * 1024, label: "MB" },
+  { value: 1024 * 1024 * 1024, label: "GB" },
+] as const;
+
+type SizeUnit = (typeof SIZE_UNITS)[number];
+
+// TTL 单位选项（值 = 秒数）
+const TTL_UNITS = [
+  { value: 1, label: "秒" },
+  { value: 60, label: "分" },
+  { value: 3600, label: "时" },
+  { value: 86400, label: "天" },
+  { value: 604800, label: "周" },
+  { value: 2592000, label: "月" },
+  { value: 31536000, label: "年" },
+] as const;
+
+type TtlUnit = (typeof TTL_UNITS)[number];
+
+// 速率限制时间窗口选项（值 = 秒数）
+const RATE_WINDOWS = [
+  { value: 1, label: "秒" },
+  { value: 60, label: "分" },
+  { value: 3600, label: "时" },
+  { value: 86400, label: "天" },
+] as const;
+
+type RateWindow = (typeof RATE_WINDOWS)[number];
+
+// 各大小字段当前选中的单位
+const sizeUnit = ref<Record<"maxFileSize" | "maxTotalSize", SizeUnit>>({
+  maxFileSize: SIZE_UNITS[2], // MB
+  maxTotalSize: SIZE_UNITS[2], // MB
+});
+
+// TTL 和速率限制当前选中的单位
+const ttlUnit = ref<TtlUnit>(TTL_UNITS[2]); // 时
+const rateWindow = ref<RateWindow>(RATE_WINDOWS[1]); // 分
+
+// 各限制字段是否无限制
+type UnlimitedField = "maxFileSize" | "maxTotalSize" | "maxFiles" | "maxDownloads" | "maxTextSize" | "ttlSeconds" | "rateLimitPerMinute";
+
+const unlimited = ref<Record<UnlimitedField, boolean>>({
+  maxFileSize: false,
+  maxTotalSize: false,
+  maxFiles: false,
+  maxDownloads: false,
+  maxTextSize: false,
+  ttlSeconds: false,
+  rateLimitPerMinute: false,
+});
+
+/** bytes → 按当前单位显示的值 */
+function toUnitValue(bytes: number, unit: SizeUnit): number {
+  return Math.round((bytes / unit.value) * 10) / 10;
 }
 
-function fromMB(mb: number): number {
-  return Math.round(mb * 1024 * 1024);
+/** 显示值 × 单位 → bytes */
+function fromUnitValue(value: number, unit: SizeUnit): number {
+  return Math.round(value * unit.value);
 }
 
-function toMinutes(seconds: number): number {
-  return Math.round(seconds / 60);
+/** 根据 bytes 自动选择最佳单位（能整除的最大单位） */
+function autoSelectUnit(bytes: number): SizeUnit {
+  for (let i = SIZE_UNITS.length - 1; i >= 0; i--) {
+    const unit = SIZE_UNITS[i];
+    if (unit && bytes % unit.value === 0 && bytes / unit.value >= 1) {
+      return unit;
+    }
+  }
+  return SIZE_UNITS[0]; // Bytes
 }
 
-function fromMinutes(minutes: number): number {
-  return Math.round(minutes * 60);
+/** 获取大小字段的显示值 */
+function getSizeDisplay(field: "maxFileSize" | "maxTotalSize"): number {
+  if (!config.value) return 0;
+  const bytes = config.value[field];
+  if (bytes === -1) return 0;
+  return toUnitValue(bytes, sizeUnit.value[field]);
+}
+
+/** 设置大小字段的显示值（单位换算后写入 config） */
+function setSizeValue(field: "maxFileSize" | "maxTotalSize", displayVal: number): void {
+  if (!config.value) return;
+  if (unlimited.value[field]) return;
+  config.value[field] = fromUnitValue(displayVal, sizeUnit.value[field]);
+}
+
+/** 大小字段切换单位时重新计算显示值 */
+function onUnitChange(field: "maxFileSize" | "maxTotalSize", unit: SizeUnit): void {
+  sizeUnit.value[field] = unit;
+  // 保持 bytes 不变，仅显示值随单位变化（模板会自动重新计算）
+}
+
+/** 无限制复选框切换 */
+function onUnlimitedChange(field: keyof typeof unlimited.value): void {
+  if (!config.value) return;
+  if (unlimited.value[field]) {
+    config.value[field] = -1 as never;
+  } else {
+    // 恢复默认值
+    const defaults: Record<string, number> = {
+      maxFileSize: 100 * 1024 * 1024,
+      maxTotalSize: 500 * 1024 * 1024,
+      maxFiles: 20,
+      maxDownloads: 20,
+      maxTextSize: 100000,
+      ttlSeconds: 3600,
+      rateLimitPerMinute: 10,
+    };
+    config.value[field] = (defaults[field] ?? 0) as never;
+    // 恢复时同步重置单位选择
+    if (field === "maxFileSize" || field === "maxTotalSize") {
+      sizeUnit.value[field] = autoSelectUnit(defaults[field] ?? 0);
+    }
+    if (field === "ttlSeconds") {
+      ttlUnit.value = autoSelectTtlUnit(defaults[field] ?? 3600);
+    }
+  }
+}
+
+/** 初始化所有字段的单位和无限制状态（加载配置后调用） */
+function initSizeFields(): void {
+  if (!config.value) return;
+  for (const field of ["maxFileSize", "maxTotalSize"] as const) {
+    const bytes = config.value[field];
+    if (bytes === -1) {
+      unlimited.value[field] = true;
+    } else {
+      unlimited.value[field] = false;
+      sizeUnit.value[field] = autoSelectUnit(bytes);
+    }
+  }
+  for (const field of ["maxFiles", "maxDownloads", "maxTextSize"] as const) {
+    unlimited.value[field] = config.value[field] === -1;
+  }
+  // TTL
+  if (config.value.ttlSeconds === -1) {
+    unlimited.value.ttlSeconds = true;
+  } else {
+    unlimited.value.ttlSeconds = false;
+    ttlUnit.value = autoSelectTtlUnit(config.value.ttlSeconds);
+  }
+  // 速率限制
+  if (config.value.rateLimitPerMinute === -1) {
+    unlimited.value.rateLimitPerMinute = true;
+  } else {
+    unlimited.value.rateLimitPerMinute = false;
+  }
+}
+
+/** TTL 秒数 → 按当前单位显示的值 */
+function getTtlDisplay(): number {
+  if (!config.value) return 0;
+  const seconds = config.value.ttlSeconds;
+  if (seconds === -1) return 0;
+  return Math.round((seconds / ttlUnit.value.value) * 10) / 10;
+}
+
+/** TTL 显示值 × 单位 → 秒数写入 config */
+function setTtlValue(displayVal: number): void {
+  if (!config.value) return;
+  if (unlimited.value.ttlSeconds) return;
+  config.value.ttlSeconds = Math.round(displayVal * ttlUnit.value.value);
+}
+
+/** TTL 切换单位 */
+function onTtlUnitChange(unit: TtlUnit): void {
+  ttlUnit.value = unit;
+}
+
+/** 根据秒数自动选择最佳 TTL 单位 */
+function autoSelectTtlUnit(seconds: number): TtlUnit {
+  for (let i = TTL_UNITS.length - 1; i >= 0; i--) {
+    const unit = TTL_UNITS[i];
+    if (unit && seconds % unit.value === 0 && seconds / unit.value >= 1) {
+      return unit;
+    }
+  }
+  return TTL_UNITS[0]; // 秒
+}
+
+/** 速率限制 per-minute → 按当前窗口显示的值 */
+function getRateDisplay(): number {
+  if (!config.value) return 0;
+  const perMinute = config.value.rateLimitPerMinute;
+  if (perMinute === -1) return 0;
+  // perMinute = count * 60 / windowSeconds → count = perMinute * windowSeconds / 60
+  return Math.round(perMinute * rateWindow.value.value / 60);
+}
+
+/** 速率限制显示值 × 窗口 → per-minute 写入 config */
+function setRateValue(displayVal: number): void {
+  if (!config.value) return;
+  if (unlimited.value.rateLimitPerMinute) return;
+  // count / window → per minute: count * 60 / windowSeconds
+  const perMinute = Math.max(1, Math.round(displayVal * 60 / rateWindow.value.value));
+  config.value.rateLimitPerMinute = perMinute;
+}
+
+/** 速率限制切换窗口 */
+function onRateWindowChange(window: RateWindow): void {
+  rateWindow.value = window;
+}
+
+/** 过滤数字输入，只允许数字 */
+function filterNumericInput(raw: string | number): number {
+  if (typeof raw === "number") return Number.isFinite(raw) ? raw : 0;
+  const cleaned = raw.replace(/[^0-9]/g, "");
+  return cleaned ? Number(cleaned) : 0;
 }
 
 // ── 密码修改表单 ──
@@ -154,6 +362,7 @@ async function loadData(): Promise<void> {
 
     if (configRes.ok) {
       config.value = await configRes.json() as AdminConfig;
+      initSizeFields();
     }
 
     if (checkRes.ok) {
@@ -409,44 +618,180 @@ onMounted(() => {
               <fieldset>
                 <legend class="mb-3 text-sm font-semibold text-foreground">{{ $t('admin.uploadSection') }}</legend>
                 <div class="grid grid-cols-2 gap-3">
-                  <div>
-                    <label class="mb-1 block text-sm text-muted-foreground">{{ $t('admin.maxFileSizeMB') }}</label>
-                    <Input
-                      type="number"
-                      :model-value="toMB(config.maxFileSize)"
-                      @update:model-value="config.maxFileSize = fromMB(Number($event))"
-                      min="1"
-                    />
+                  <!-- maxFileSize -->
+                  <div class="space-y-1.5">
+                    <label class="text-sm text-muted-foreground">{{ $t('admin.maxFileSizeMB') }}</label>
+                    <InputGroup>
+                      <InputGroupInput
+                        :model-value="unlimited.maxFileSize ? '' : getSizeDisplay('maxFileSize')"
+                        @update:model-value="setSizeValue('maxFileSize', filterNumericInput($event))"
+                        :disabled="unlimited.maxFileSize"
+                        :placeholder="unlimited.maxFileSize ? $t('admin.unlimited') : '0'"
+                      />
+                      <InputGroupAddon align="inline-end">
+                        <Select
+                          :model-value="sizeUnit.maxFileSize.value"
+                          :disabled="unlimited.maxFileSize"
+                          @update:model-value="(v: unknown) => { const n = Number(v); onUnitChange('maxFileSize', SIZE_UNITS.find(u => u.value === n) || SIZE_UNITS[2]) }"
+                        >
+                          <SelectTriggerUi class="w-20 border-0 bg-transparent shadow-none">
+                            <SelectValue />
+                          </SelectTriggerUi>
+                          <SelectContent>
+                            <SelectItem v-for="u in SIZE_UNITS" :key="u.value" :value="u.value">
+                              {{ u.label }}
+                            </SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </InputGroupAddon>
+                      <InputGroupAddon align="inline-end">
+                        <Switch
+                          :model-value="unlimited.maxFileSize"
+                          @update:model-value="unlimited.maxFileSize = $event; onUnlimitedChange('maxFileSize')"
+                        />
+                      </InputGroupAddon>
+                    </InputGroup>
                   </div>
-                  <div>
-                    <label class="mb-1 block text-sm text-muted-foreground">{{ $t('admin.maxTotalSizeMB') }}</label>
-                    <Input
-                      type="number"
-                      :model-value="toMB(config.maxTotalSize)"
-                      @update:model-value="config.maxTotalSize = fromMB(Number($event))"
-                      min="1"
-                    />
+                  <!-- maxTotalSize -->
+                  <div class="space-y-1.5">
+                    <label class="text-sm text-muted-foreground">{{ $t('admin.maxTotalSizeMB') }}</label>
+                    <InputGroup>
+                      <InputGroupInput
+                        :model-value="unlimited.maxTotalSize ? '' : getSizeDisplay('maxTotalSize')"
+                        @update:model-value="setSizeValue('maxTotalSize', filterNumericInput($event))"
+                        :disabled="unlimited.maxTotalSize"
+                        :placeholder="unlimited.maxTotalSize ? $t('admin.unlimited') : '0'"
+                      />
+                      <InputGroupAddon align="inline-end">
+                        <Select
+                          :model-value="sizeUnit.maxTotalSize.value"
+                          :disabled="unlimited.maxTotalSize"
+                          @update:model-value="(v: unknown) => { const n = Number(v); onUnitChange('maxTotalSize', SIZE_UNITS.find(u => u.value === n) || SIZE_UNITS[2]) }"
+                        >
+                          <SelectTriggerUi class="w-20 border-0 bg-transparent shadow-none">
+                            <SelectValue />
+                          </SelectTriggerUi>
+                          <SelectContent>
+                            <SelectItem v-for="u in SIZE_UNITS" :key="u.value" :value="u.value">
+                              {{ u.label }}
+                            </SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </InputGroupAddon>
+                      <InputGroupAddon align="inline-end">
+                        <Switch
+                          :model-value="unlimited.maxTotalSize"
+                          @update:model-value="unlimited.maxTotalSize = $event; onUnlimitedChange('maxTotalSize')"
+                        />
+                      </InputGroupAddon>
+                    </InputGroup>
                   </div>
-                  <div>
-                    <label class="mb-1 block text-sm text-muted-foreground">{{ $t('admin.maxFiles') }}</label>
-                    <Input v-model.number="config.maxFiles" type="number" min="1" />
+                  <!-- maxFiles -->
+                  <div class="space-y-1.5">
+                    <label class="text-sm text-muted-foreground">{{ $t('admin.maxFiles') }}</label>
+                    <InputGroup>
+                      <InputGroupInput
+                        :model-value="unlimited.maxFiles ? '' : config.maxFiles"
+                        @update:model-value="config.maxFiles = filterNumericInput($event)"
+                        :disabled="unlimited.maxFiles"
+                        :placeholder="unlimited.maxFiles ? $t('admin.unlimited') : '20'"
+                      />
+                      <InputGroupAddon align="inline-end">
+                        <Switch
+                          :model-value="unlimited.maxFiles"
+                          @update:model-value="unlimited.maxFiles = $event; onUnlimitedChange('maxFiles')"
+                        />
+                      </InputGroupAddon>
+                    </InputGroup>
                   </div>
-                  <div>
-                    <label class="mb-1 block text-sm text-muted-foreground">{{ $t('admin.maxDownloadsCfg') }}</label>
-                    <Input v-model.number="config.maxDownloads" type="number" min="1" />
+                  <!-- maxDownloads -->
+                  <div class="space-y-1.5">
+                    <label class="text-sm text-muted-foreground">{{ $t('admin.maxDownloadsCfg') }}</label>
+                    <InputGroup>
+                      <InputGroupInput
+                        :model-value="unlimited.maxDownloads ? '' : config.maxDownloads"
+                        @update:model-value="config.maxDownloads = filterNumericInput($event)"
+                        :disabled="unlimited.maxDownloads"
+                        :placeholder="unlimited.maxDownloads ? $t('admin.unlimited') : '20'"
+                      />
+                      <InputGroupAddon align="inline-end">
+                        <Switch
+                          :model-value="unlimited.maxDownloads"
+                          @update:model-value="unlimited.maxDownloads = $event; onUnlimitedChange('maxDownloads')"
+                        />
+                      </InputGroupAddon>
+                    </InputGroup>
                   </div>
-                  <div>
-                    <label class="mb-1 block text-sm text-muted-foreground">{{ $t('admin.ttlMinutes') }}</label>
-                    <Input
-                      type="number"
-                      :model-value="toMinutes(config.ttlSeconds)"
-                      @update:model-value="config.ttlSeconds = fromMinutes(Number($event))"
-                      min="1"
-                    />
+                  <!-- ttlSeconds -->
+                  <div class="space-y-1.5">
+                    <label class="text-sm text-muted-foreground">{{ $t('admin.ttlMinutes') }}</label>
+                    <InputGroup>
+                      <InputGroupInput
+                        :model-value="unlimited.ttlSeconds ? '' : getTtlDisplay()"
+                        @update:model-value="setTtlValue(filterNumericInput($event))"
+                        :disabled="unlimited.ttlSeconds"
+                        :placeholder="unlimited.ttlSeconds ? $t('admin.unlimited') : '0'"
+                      />
+                      <InputGroupAddon align="inline-end">
+                        <Select
+                          :model-value="ttlUnit.value"
+                          :disabled="unlimited.ttlSeconds"
+                          @update:model-value="(v: unknown) => onTtlUnitChange(TTL_UNITS.find(u => u.value === Number(v)) || TTL_UNITS[2])"
+                        >
+                          <SelectTriggerUi class="w-16 border-0 bg-transparent shadow-none">
+                            <SelectValue />
+                          </SelectTriggerUi>
+                          <SelectContent>
+                            <SelectItem v-for="u in TTL_UNITS" :key="u.value" :value="u.value">
+                              {{ u.label }}
+                            </SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </InputGroupAddon>
+                      <InputGroupAddon align="inline-end">
+                        <Switch
+                          :model-value="unlimited.ttlSeconds"
+                          @update:model-value="unlimited.ttlSeconds = $event; onUnlimitedChange('ttlSeconds')"
+                        />
+                      </InputGroupAddon>
+                    </InputGroup>
                   </div>
-                  <div>
-                    <label class="mb-1 block text-sm text-muted-foreground">{{ $t('admin.rateLimitPerMinute') }}</label>
-                    <Input v-model.number="config.rateLimitPerMinute" type="number" min="1" />
+                  <!-- rateLimitPerMinute -->
+                  <div class="space-y-1.5">
+                    <label class="text-sm text-muted-foreground">{{ $t('admin.rateLimitPerMinute') }}</label>
+                    <InputGroup>
+                      <InputGroupInput
+                        :model-value="unlimited.rateLimitPerMinute ? '' : getRateDisplay()"
+                        @update:model-value="setRateValue(filterNumericInput($event))"
+                        :disabled="unlimited.rateLimitPerMinute"
+                        :placeholder="unlimited.rateLimitPerMinute ? $t('admin.unlimited') : '0'"
+                      />
+                      <InputGroupAddon align="inline-end">
+                        <span class="px-1 text-xs text-muted-foreground">/</span>
+                      </InputGroupAddon>
+                      <InputGroupAddon align="inline-end">
+                        <Select
+                          :model-value="rateWindow.value"
+                          :disabled="unlimited.rateLimitPerMinute"
+                          @update:model-value="(v: unknown) => onRateWindowChange(RATE_WINDOWS.find(w => w.value === Number(v)) || RATE_WINDOWS[1])"
+                        >
+                          <SelectTriggerUi class="w-16 border-0 bg-transparent shadow-none">
+                            <SelectValue />
+                          </SelectTriggerUi>
+                          <SelectContent>
+                            <SelectItem v-for="w in RATE_WINDOWS" :key="w.value" :value="w.value">
+                              {{ w.label }}
+                            </SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </InputGroupAddon>
+                      <InputGroupAddon align="inline-end">
+                        <Switch
+                          :model-value="unlimited.rateLimitPerMinute"
+                          @update:model-value="unlimited.rateLimitPerMinute = $event; onUnlimitedChange('rateLimitPerMinute')"
+                        />
+                      </InputGroupAddon>
+                    </InputGroup>
                   </div>
                 </div>
               </fieldset>
@@ -454,15 +799,22 @@ onMounted(() => {
               <!-- 文本限制 -->
               <fieldset>
                 <legend class="mb-3 text-sm font-semibold text-foreground">{{ $t('admin.textSection') }}</legend>
-                <div>
-                  <label class="mb-1 block text-sm text-muted-foreground">{{ $t('admin.maxTextSizeMB') }}</label>
-                  <Input
-                    type="number"
-                    :model-value="toMB(config.maxTextSize)"
-                    @update:model-value="config.maxTextSize = fromMB(Number($event))"
-                    min="0.1"
-                    step="0.1"
-                  />
+                <div class="space-y-1.5">
+                  <label class="text-sm text-muted-foreground">{{ $t('admin.maxTextChars') }}</label>
+                  <InputGroup>
+                    <InputGroupInput
+                      :model-value="unlimited.maxTextSize ? '' : config.maxTextSize"
+                      @update:model-value="config.maxTextSize = filterNumericInput($event)"
+                      :disabled="unlimited.maxTextSize"
+                      :placeholder="unlimited.maxTextSize ? $t('admin.unlimited') : '100000'"
+                    />
+                    <InputGroupAddon align="inline-end">
+                      <Switch
+                        :model-value="unlimited.maxTextSize"
+                        @update:model-value="unlimited.maxTextSize = $event; onUnlimitedChange('maxTextSize')"
+                      />
+                    </InputGroupAddon>
+                  </InputGroup>
                 </div>
               </fieldset>
 
