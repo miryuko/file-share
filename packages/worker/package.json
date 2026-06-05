@@ -1,0 +1,27 @@
+{
+  "name": "@file-share/worker",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "dev": "wrangler dev",
+    "build": "pnpm --filter @file-share/web build && rm -rf public/assets public/favicon.ico && cp -r ../web/dist/* public/",
+    "deploy": "pnpm build && wrangler deploy --minify",
+    "deploy:preview": "pnpm build && wrangler deploy --env preview",
+    "deploy:prod": "pnpm build && wrangler deploy --env production",
+    "cf-typegen": "wrangler types --env-interface CloudflareBindings",
+    "test:unit": "vitest run --config vitest.config.ts",
+    "test:integration": "vitest run --config vitest.integration.config.ts",
+    "typecheck": "tsc --noEmit",
+    "lint": "tsc --noEmit"
+  },
+  "dependencies": {
+    "hono": "^4.12.23"
+  },
+  "devDependencies": {
+    "@types/node": "^25.9.1",
+    "miniflare": "^4.14.0",
+    "typescript": "~6.0.0",
+    "vitest": "^4.1.4",
+    "wrangler": "^4.98.0"
+  }
+}
