@@ -4,6 +4,8 @@
 
 **基于 Cloudflare Workers 的文件传输助手 — 安全、匿名、即时**
 
+🌐 [fs.sekkki.com](https://fs.sekkki.com)
+
 [![License](https://img.shields.io/github/license/miryuko/file-share)](./LICENSE)
 [![Tests](https://img.shields.io/badge/tests-59%20passed-brightgreen)]()
 [![TypeScript](https://img.shields.io/badge/TypeScript-strict-blue)]()
