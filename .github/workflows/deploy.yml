@@ -39,4 +39,7 @@ jobs:
           account-id: ${{ secrets.CF_ACCOUNT_ID }}
           working-directory: packages/worker
           command: deploy
-
+          secrets: |
+            ADMIN_JWT_SECRET
+        env:
+          ADMIN_JWT_SECRET: ${{ secrets.ADMIN_JWT_SECRET }}
