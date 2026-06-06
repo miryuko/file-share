@@ -1,16 +1,18 @@
 <script setup lang="ts">
 import { ref, watch, computed } from "vue";
 import { useI18n } from "vue-i18n";
-import { Upload } from "lucide-vue-next";
-import { useFileUpload } from "../composables/useFileUpload";
+import { Upload, WifiOff } from "lucide-vue-next";
+import { useFileUploadManager } from "../composables/useFileUploadManager";
+import { useConnectionStatus } from "../composables/useConnectionStatus";
 import { useSiteConfig } from "../composables/useSiteConfig";
 import { ApiError } from "../lib/api";
 import { generateQRCodeDataURI } from "../lib/qrcode";
 import P2PTransfer from "../components/P2PTransfer.vue";
+import FileListPreview from "../components/FileListPreview.vue";
+import FileUploadProgress from "../components/FileUploadProgress.vue";
 import { Button } from "../components/ui/button";
 import { Card, CardContent } from "../components/ui/card";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "../components/ui/tabs";
-import { Progress } from "../components/ui/progress";
 import { Textarea } from "../components/ui/textarea";
 
 const { t } = useI18n();
@@ -20,14 +22,30 @@ const { config } = useSiteConfig();
 const fileLimitsText = computed(() => {
   const maxFileMB = (config.value.maxFileSize / (1024 * 1024)).toFixed(0);
   const maxTotalMB = (config.value.maxTotalSize / (1024 * 1024)).toFixed(0);
-  return t('send.fileLimits', { maxFileSize: maxFileMB, maxTotalSize: maxTotalMB });
+  return t("send.fileLimits", { maxFileSize: maxFileMB, maxTotalSize: maxTotalMB });
 });
 
 type ShareMode = "file" | "text";
 
 const mode = ref<ShareMode>("file");
 
-const { shareCode, files, isUploading, uploadFiles, reset } = useFileUpload();
+// ── 连接状态 ──
+const { isOnline } = useConnectionStatus();
+
+// ── 文件上传管理器 ──
+const {
+  selectedFiles,
+  canAddMoreFiles,
+  addFiles,
+  removeFile,
+  phase,
+  shareCode,
+  fileUploads,
+  overallProgress,
+  startUpload,
+  cancelUpload,
+  reset: resetUpload,
+} = useFileUploadManager();
 
 function buildShareUrl(code: string): string {
   return `${window.location.origin}/receive/${code}`;
@@ -37,14 +55,31 @@ const qrCodeURI = ref("");
 
 const fileInput = ref<HTMLInputElement | null>(null);
 const dragOver = ref(false);
-const errorMessage = ref("");
+const uploadError = ref("");
 const copied = ref(false);
+/** 添加文件时的警告信息（如部分文件被拒绝） */
+const addWarnings = ref<string[]>([]);
 
 const textContent = ref("");
 const textCode = ref("");
 const textLoading = ref(false);
 const textError = ref("");
 const textCopied = ref(false);
+
+/** 是否显示文件审核阶段 */
+const showFileReview = computed(
+  () => phase.value === "selecting" && selectedFiles.value.length > 0,
+);
+
+/** 是否显示上传进度 */
+const showUploadProgress = computed(() => phase.value === "uploading");
+
+/** 是否显示上传结果 */
+const showUploadResult = computed(
+  () =>
+    (phase.value === "completed" || phase.value === "error" || phase.value === "cancelled") &&
+    shareCode.value !== "",
+);
 
 // 分享码变化时异步生成 QR 码（编码完整 URL）
 watch(
@@ -58,87 +93,115 @@ watch(
   },
 );
 
-function validateFiles(selectedFiles: File[]): string | null {
-  const maxFiles = config.value.maxFiles;
-  const maxFileSize = config.value.maxFileSize;
-  const maxTotalSize = config.value.maxTotalSize;
-
-  if (selectedFiles.length === 0) return t('send.validation.selectFile');
-  if (selectedFiles.length > maxFiles) return t('send.validation.maxFiles', { max: maxFiles });
-
-  for (const f of selectedFiles) {
-    if (f.size <= 0) return t('send.validation.zeroSize', { name: f.name });
-    if (f.size > maxFileSize) {
-      const limitMB = (maxFileSize / (1024 * 1024)).toFixed(0);
-      return t('send.validation.fileTooBig', { name: f.name, limit: limitMB });
-    }
-  }
-
-  const total = selectedFiles.reduce((s, f) => s + f.size, 0);
-  if (total > maxTotalSize) {
-    const limitMB = (maxTotalSize / (1024 * 1024)).toFixed(0);
-    return t('send.validation.totalTooBig', { limit: limitMB });
-  }
-
-  return null;
-}
+// ── 文件处理 ──
 
 async function handleFiles(selectedFiles: FileList | File[]): Promise<void> {
-  errorMessage.value = "";
+  uploadError.value = "";
+  addWarnings.value = [];
 
   const fileArray = Array.from(
     "length" in selectedFiles ? selectedFiles : selectedFiles,
   );
 
-  const validationError = validateFiles(fileArray);
-  if (validationError) {
-    errorMessage.value = validationError;
-    return;
-  }
-
-  try {
-    await uploadFiles(fileArray);
-  } catch (err) {
-    if (err instanceof ApiError) {
-      errorMessage.value = err.message;
-    } else {
-      errorMessage.value = t('send.uploadError');
-    }
+  const result = await addFiles(fileArray);
+  if (result.errors.length > 0) {
+    addWarnings.value = result.errors;
   }
 }
 
 function onFileChange(event: Event): void {
   const input = event.target as HTMLInputElement;
-  if (input.files) handleFiles(input.files);
+  if (input.files) {
+    handleFiles(input.files);
+    // 重置 input 以便可以重新选择相同文件
+    input.value = "";
+  }
 }
 
 function onDrop(event: DragEvent): void {
   dragOver.value = false;
-  if (event.dataTransfer?.files) handleFiles(event.dataTransfer.files);
+  if (event.dataTransfer?.files && event.dataTransfer.files.length > 0) {
+    handleFiles(event.dataTransfer.files);
+  }
 }
+
+function triggerFileInput(): void {
+  fileInput.value?.click();
+}
+
+// ── 剪贴板粘贴 ──
+
+function onPaste(event: ClipboardEvent): void {
+  const items = event.clipboardData?.items;
+  if (!items) return;
+
+  const files: File[] = [];
+  for (let i = 0; i < items.length; i++) {
+    const item = items[i];
+    if (item?.kind === "file") {
+      const file = item.getAsFile();
+      if (file) files.push(file);
+    }
+  }
+
+  if (files.length > 0) {
+    event.preventDefault();
+    handleFiles(files);
+  }
+}
+
+// ── 上传操作 ──
+
+async function sendFiles(): Promise<void> {
+  uploadError.value = "";
+  try {
+    await startUpload();
+  } catch (err) {
+    if (err instanceof ApiError) {
+      uploadError.value = err.message;
+    } else if (err instanceof Error && err.message !== "没有可上传的文件") {
+      uploadError.value = t("send.uploadError");
+    }
+  }
+}
+
+function handleCancel(): void {
+  cancelUpload();
+}
+
+// ── 分享码操作 ──
 
 async function copyCode(): Promise<void> {
   if (!shareCode.value) return;
   try {
     await navigator.clipboard.writeText(buildShareUrl(shareCode.value));
     copied.value = true;
-    setTimeout(() => { copied.value = false; }, 2000);
-  } catch { /* fallback */ }
+    setTimeout(() => {
+      copied.value = false;
+    }, 2000);
+  } catch {
+    /* fallback */
+  }
 }
+
+// ── 文本分享 ──
 
 async function handleTextSend(): Promise<void> {
   textError.value = "";
   const content = textContent.value.trim();
 
   if (!content) {
-    textError.value = t('send.validation.textEmpty');
+    textError.value = t("send.validation.textEmpty");
     return;
   }
 
   const maxTextSize = config.value.maxTextSize;
   const charCount = [...content].length;
   if (maxTextSize !== -1 && charCount > maxTextSize) {
-    textError.value = t('send.validation.textTooLong', { count: charCount, limit: maxTextSize });
+    textError.value = t("send.validation.textTooLong", {
+      count: charCount,
+      limit: maxTextSize,
+    });
     return;
   }
 
@@ -152,14 +215,14 @@ async function handleTextSend(): Promise<void> {
 
     if (!res.ok) {
       const body = (await res.json()) as { message: string };
-      textError.value = body.message || t('send.sendFailed');
+      textError.value = body.message || t("send.sendFailed");
       return;
     }
 
     const { code } = (await res.json()) as { code: string };
     textCode.value = code;
   } catch {
-    textError.value = t('send.networkError');
+    textError.value = t("send.networkError");
   } finally {
     textLoading.value = false;
   }
@@ -170,15 +233,21 @@ async function copyTextCode(): Promise<void> {
   try {
     await navigator.clipboard.writeText(buildShareUrl(textCode.value));
     textCopied.value = true;
-    setTimeout(() => { textCopied.value = false; }, 2000);
-  } catch { /* fallback */ }
+    setTimeout(() => {
+      textCopied.value = false;
+    }, 2000);
+  } catch {
+    /* fallback */
+  }
 }
 
 function resetAll(): void {
-  reset();
+  resetUpload();
   textCode.value = "";
   textContent.value = "";
   textError.value = "";
+  uploadError.value = "";
+  addWarnings.value = [];
 }
 
 function formatSize(bytes: number): string {
@@ -189,38 +258,134 @@ function formatSize(bytes: number): string {
 </script>
 
 <template>
-  <div class="mx-auto max-w-[480px] px-4 py-8">
-    <h1 class="mb-1 text-center text-2xl font-bold">{{ $t('send.title') }}</h1>
-    <p class="mb-6 text-center text-sm text-muted-foreground">{{ $t('send.subtitle') }}</p>
+  <div
+    class="mx-auto max-w-[480px] px-4 py-8"
+    @paste="onPaste"
+  >
+    <h1 class="mb-1 text-center text-2xl font-bold">{{ $t("send.title") }}</h1>
+    <p class="mb-6 text-center text-sm text-muted-foreground">
+      {{ $t("send.subtitle") }}
+    </p>
+
+    <!-- 连接状态横幅 -->
+    <div
+      v-if="!isOnline"
+      class="mb-4 flex items-center justify-center gap-2 rounded-lg border border-amber-200 bg-amber-50 px-4 py-2 text-sm text-amber-700"
+    >
+      <WifiOff :size="16" />
+      {{ $t("send.connectionOffline") }}
+    </div>
 
     <!-- 模式切换 -->
-    <Tabs v-if="!shareCode && !textCode" v-model="mode" class="mb-6">
+    <Tabs
+      v-if="!showUploadResult && !textCode"
+      v-model="mode"
+      class="mb-6"
+    >
       <TabsList class="grid w-full grid-cols-2">
-        <TabsTrigger value="file">{{ $t('send.tabFile') }}</TabsTrigger>
-        <TabsTrigger value="text">{{ $t('send.tabText') }}</TabsTrigger>
+        <TabsTrigger value="file">{{ $t("send.tabFile") }}</TabsTrigger>
+        <TabsTrigger value="text">{{ $t("send.tabText") }}</TabsTrigger>
       </TabsList>
+
+      <!-- 文件 Tab -->
       <TabsContent value="file" class="mt-4">
-        <!-- 文件上传区域 -->
+        <!-- 隐藏的文件选择 input，始终在 DOM 中 -->
+        <input
+          ref="fileInput"
+          type="file"
+          multiple
+          class="hidden"
+          @change="onFileChange"
+        />
+
+        <!-- 阶段 1：文件选择 -->
+        <template v-if="!showUploadProgress && !showUploadResult">
+          <!-- 审核阶段：显示文件列表 -->
+          <div v-if="showFileReview" class="space-y-4">
+            <FileListPreview
+              :files="selectedFiles"
+              :can-add-more="canAddMoreFiles"
+              @remove="removeFile"
+              @add-more="triggerFileInput"
+            />
+
+            <!-- 添加文件时的警告 -->
+            <div
+              v-for="(warn, idx) in addWarnings"
+              :key="idx"
+              class="rounded-lg border border-amber-200 bg-amber-50 px-4 py-2 text-sm text-amber-700"
+            >
+              {{ warn }}
+            </div>
+
+            <!-- 上传错误 -->
+            <div
+              v-if="uploadError"
+              class="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600"
+            >
+              {{ uploadError }}
+            </div>
+
+            <Button class="w-full" size="lg" @click="sendFiles">
+              {{ $t("send.sendFiles", { n: selectedFiles.length }) }}
+            </Button>
+          </div>
+
+          <!-- 空状态：拖放区域 -->
+          <div v-else>
+            <div
+              class="cursor-pointer rounded-xl border-2 border-dashed border-border px-8 py-12 text-center transition-all duration-200 hover:border-primary hover:bg-accent/50"
+              :class="{ 'border-primary bg-accent/50 scale-[1.02]': dragOver }"
+              @dragover.prevent="dragOver = true"
+              @dragleave.prevent="dragOver = false"
+              @drop.prevent="onDrop"
+              @click="triggerFileInput"
+            >
+              <Upload class="mx-auto mb-4 text-muted-foreground" :size="48" />
+              <p class="mb-2 text-lg">{{ $t("send.dropZone") }}</p>
+              <p class="mb-1 text-xs text-muted-foreground">
+                {{ $t("send.selectOrPaste") }}
+              </p>
+              <p class="text-xs text-muted-foreground">{{ fileLimitsText }}</p>
+            </div>
+
+            <!-- 添加文件警告 -->
+            <div
+              v-for="(warn, idx) in addWarnings"
+              :key="idx"
+              class="mt-4 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-700"
+            >
+              {{ warn }}
+            </div>
+
+            <!-- 上传错误 -->
+            <div
+              v-if="uploadError"
+              class="mt-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600"
+            >
+              {{ uploadError }}
+            </div>
+          </div>
+        </template>
+
+        <!-- 阶段 2：上传进度 -->
+        <FileUploadProgress
+          v-if="showUploadProgress"
+          :uploads="fileUploads"
+          :overall="overallProgress"
+          @cancel="handleCancel"
+        />
+
+        <!-- 上传错误（会话创建失败等） -->
         <div
-          class="cursor-pointer rounded-xl border-2 border-dashed border-border px-8 py-12 text-center transition-colors hover:border-primary hover:bg-accent/50"
-          :class="{ 'border-primary bg-accent/50': dragOver }"
-          @dragover.prevent="dragOver = true"
-          @dragleave.prevent="dragOver = false"
-          @drop.prevent="onDrop"
-          @click="fileInput?.click()"
-        >
-          <Upload class="mx-auto mb-4 text-muted-foreground" :size="48" />
-          <p class="mb-2 text-lg">{{ $t('send.dropZone') }}</p>
-          <p class="text-xs text-muted-foreground">{{ fileLimitsText }}</p>
-        </div>
-        <input ref="fileInput" type="file" multiple class="hidden" @change="onFileChange" />
-        <div
-          v-if="errorMessage"
+          v-if="uploadError && !showUploadProgress"
           class="mt-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600"
         >
-          {{ errorMessage }}
+          {{ uploadError }}
         </div>
       </TabsContent>
+
+      <!-- 文本 Tab -->
       <TabsContent value="text" class="mt-4 space-y-3">
         <Textarea
           v-model="textContent"
@@ -232,8 +397,11 @@ function formatSize(bytes: number): string {
           <span class="text-xs text-muted-foreground">
             {{ [...textContent].length.toLocaleString() }} chars
           </span>
-          <Button :disabled="!textContent.trim() || textLoading" @click="handleTextSend">
-            {{ textLoading ? $t('send.sending') : $t('send.sendText') }}
+          <Button
+            :disabled="!textContent.trim() || textLoading"
+            @click="handleTextSend"
+          >
+            {{ textLoading ? $t("send.sending") : $t("send.sendText") }}
           </Button>
         </div>
         <div
@@ -245,24 +413,16 @@ function formatSize(bytes: number): string {
       </TabsContent>
     </Tabs>
 
-    <!-- 上传进度 -->
-    <div v-if="isUploading" class="mt-4 space-y-4">
-      <div v-for="f in files" :key="f.fileId || f.file.name" class="rounded-lg bg-muted p-3">
-        <div class="mb-2 flex justify-between text-sm">
-          <span class="truncate">{{ f.file.name }}</span>
-          <span class="ml-2 flex-shrink-0 text-muted-foreground">{{ formatSize(f.file.size) }}</span>
-        </div>
-        <Progress :model-value="f.progress" class="h-1.5" />
-        <span class="mt-1 inline-block text-xs text-muted-foreground">{{ f.progress }}%</span>
-      </div>
-    </div>
-
     <!-- 文本分享结果 -->
     <div v-if="textCode" class="text-center">
       <Card class="mb-6 bg-muted">
         <CardContent class="p-8 text-center">
-          <p class="mb-2 text-sm text-muted-foreground">{{ $t('send.textCodeLabel') }}</p>
-          <p class="mb-4 font-mono text-4xl font-bold tracking-[0.3em] text-blue-800">{{ textCode }}</p>
+          <p class="mb-2 text-sm text-muted-foreground">
+            {{ $t("send.textCodeLabel") }}
+          </p>
+          <p class="mb-4 font-mono text-4xl font-bold tracking-[0.3em] text-blue-800">
+            {{ textCode }}
+          </p>
           <img
             v-if="qrCodeURI"
             :src="qrCodeURI"
@@ -272,19 +432,33 @@ function formatSize(bytes: number): string {
             height="160"
           />
           <Button @click="copyTextCode">
-            {{ textCopied ? $t('send.copied') : $t('send.copy') }}
+            {{ textCopied ? $t("send.copied") : $t("send.copy") }}
           </Button>
         </CardContent>
       </Card>
-      <Button variant="secondary" class="mt-4" @click="resetAll">{{ $t('send.sendNewContent') }}</Button>
+      <Button variant="secondary" class="mt-4" @click="resetAll">
+        {{ $t("send.sendNewContent") }}
+      </Button>
     </div>
 
     <!-- 文件上传完成 -->
-    <div v-if="shareCode && !isUploading" class="text-center">
+    <div v-if="showUploadResult" class="text-center">
+      <!-- 部分成功提示 -->
+      <div
+        v-if="fileUploads.some((f) => f.status === 'error')"
+        class="mb-4 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-700"
+      >
+        {{ $t("send.partialSuccess") }}
+      </div>
+
       <Card class="mb-6 bg-muted">
         <CardContent class="p-8 text-center">
-          <p class="mb-2 text-sm text-muted-foreground">{{ $t('send.shareCodeLabel') }}</p>
-          <p class="mb-4 font-mono text-4xl font-bold tracking-[0.3em] text-blue-800">{{ shareCode }}</p>
+          <p class="mb-2 text-sm text-muted-foreground">
+            {{ $t("send.shareCodeLabel") }}
+          </p>
+          <p class="mb-4 font-mono text-4xl font-bold tracking-[0.3em] text-blue-800">
+            {{ shareCode }}
+          </p>
           <img
             v-if="qrCodeURI"
             :src="qrCodeURI"
@@ -294,7 +468,7 @@ function formatSize(bytes: number): string {
             height="160"
           />
           <Button @click="copyCode">
-            {{ copied ? $t('send.copied') : $t('send.copy') }}
+            {{ copied ? $t("send.copied") : $t("send.copy") }}
           </Button>
         </CardContent>
       </Card>
@@ -306,20 +480,26 @@ function formatSize(bytes: number): string {
         @fallback="console.log('P2P fallback, using R2 upload')"
       />
 
+      <!-- 文件结果列表 -->
       <div class="mb-4 text-left">
         <div
-          v-for="f in files"
-          :key="f.fileId || f.file.name"
+          v-for="upload in fileUploads"
+          :key="upload.fileId || upload.filename"
           class="flex items-center gap-2 border-b border-border py-2"
         >
-          <span class="flex-1 truncate">{{ f.file.name }}</span>
-          <span class="text-sm text-muted-foreground">{{ formatSize(f.file.size) }}</span>
-          <span v-if="f.status === 'completed'" class="font-bold text-green-600">✓</span>
-          <span v-else-if="f.status === 'error'" class="font-bold text-red-600">✗</span>
+          <span class="flex-1 truncate">{{ upload.filename }}</span>
+          <span class="text-sm text-muted-foreground">{{ formatSize(upload.totalBytes) }}</span>
+          <span v-if="upload.status === 'completed'" class="font-bold text-green-600">✓</span>
+          <span v-else-if="upload.status === 'error'" class="font-bold text-red-600">✗</span>
+          <span v-else-if="upload.status === 'cancelled'" class="font-bold text-muted-foreground">—</span>
         </div>
       </div>
 
-      <Button variant="secondary" class="mt-4" @click="resetAll">{{ $t('send.sendNewFile') }}</Button>
+      <Button variant="secondary" class="mt-4" @click="resetAll">
+        {{ $t("send.sendNewFile") }}
+      </Button>
     </div>
   </div>
+
+
 </template>

@@ -73,10 +73,12 @@ export async function uploadPart(
   fileId: string,
   partNumber: number,
   data: ArrayBuffer,
+  signal?: AbortSignal,
 ): Promise<{ partNumber: number; etag: string }> {
   return request(`/api/upload/${code}/${fileId}/part?partNumber=${partNumber}`, {
     method: "POST",
     body: data,
+    signal,
   });
 }
 
@@ -85,11 +87,27 @@ export async function completeUpload(
   code: string,
   fileId: string,
   parts: { partNumber: number; etag: string }[],
+  signal?: AbortSignal,
 ): Promise<{ fileId: string; size: number }> {
   return request(`/api/upload/${code}/${fileId}/complete`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ parts }),
+    signal,
+  });
+}
+
+/** 直接上传小文件（< 5MB），不分片 */
+export async function uploadFileDirect(
+  code: string,
+  fileId: string,
+  data: ArrayBuffer,
+  signal?: AbortSignal,
+): Promise<{ fileId: string; size: number }> {
+  return request(`/api/upload/${code}/${fileId}/direct`, {
+    method: "POST",
+    body: data,
+    signal,
   });
 }
 
