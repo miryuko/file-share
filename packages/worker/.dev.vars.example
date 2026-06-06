@@ -1,0 +1,10 @@
+# ── 本地开发密钥模板 ──
+# 复制此文件为 .dev.vars 并填入实际值
+# cp .dev.vars.example .dev.vars
+#
+# 生产环境通过以下命令设置：
+#   npx wrangler secret put ADMIN_JWT_SECRET
+#   npx wrangler secret put ADMIN_DEFAULT_PASSWORD
+
+ADMIN_JWT_SECRET="your-jwt-secret-at-least-64-chars"
+ADMIN_DEFAULT_PASSWORD="your-default-admin-password"

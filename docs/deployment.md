@@ -23,12 +23,43 @@ npx wrangler kv namespace create file-share-kv --preview
 
 将输出的 ID 填入 `wrangler.jsonc` 的 `kv_namespaces` 配置中。
 
-### 设置生产密钥
+### 设置生产密钥（一次性）
+
+Secrets 是持久化的加密环境变量，设置后永久保存在 Cloudflare，不会随代码部署被覆盖。
 
 ```sh
-# 设置管理员 JWT 签名密钥
-npx wrangler secret put ADMIN_JWT_SECRET --env production
+# 仅需执行一次：
+npx wrangler secret put ADMIN_JWT_SECRET
 # 输入一个随机长字符串（推荐 64 字符以上）
+
+npx wrangler secret put ADMIN_DEFAULT_PASSWORD
+# 输入管理员默认密码
+```
+
+> [!IMPORTANT]
+> `wrangler.jsonc` 已配置 `secrets.required`，部署前必须已设置以上两个密钥，
+> 否则 `wrangler deploy` 会报错并列出缺失的密钥。
+>
+> Secrets 只需设置一次，CI 部署不会重新上传它们。
+>
+> 如需更新 secret 值：`npx wrangler secret put <KEY>` 再次执行即可覆盖。
+
+### 从 vars 迁移到 secrets（仅首次需要）
+
+如果 Worker 之前用 `vars` 配置了同名环境变量，需要先清除旧的 vars 绑定：
+
+```sh
+# 1. 临时注释掉 wrangler.jsonc 中的 "secrets" 块
+# 2. 部署一次，清除旧的 vars 绑定
+npx wrangler deploy
+
+# 3. 设置 secrets
+npx wrangler secret put ADMIN_JWT_SECRET
+npx wrangler secret put ADMIN_DEFAULT_PASSWORD
+
+# 4. 恢复 wrangler.jsonc 中的 "secrets" 块
+# 5. 再次部署，验证 secrets.required 通过
+npx wrangler deploy
 ```
 
 ### 部署
@@ -40,12 +71,24 @@ pnpm build:worker --env production
 cd packages/worker && npx wrangler deploy --env production
 ```
 
+## 本地开发
+
+本地开发使用 `.dev.vars` 文件存放密钥（已加入 `.gitignore`，不会提交到仓库）：
+
+```sh
+# 复制模板文件
+cp packages/worker/.dev.vars.example packages/worker/.dev.vars
+
+# 编辑 .dev.vars，填入本地开发用的值
+# 模板中的默认值可直接用于本地开发
+```
+
 ## 首次管理员登录
 
 1. 访问 `https://your-domain/admin`
-2. 使用默认密码 `admin123` 登录
+2. 使用 `ADMIN_DEFAULT_PASSWORD` 设置的值（默认 `123456`）登录
 3. 首次登录后密码会被哈希存储
-4. 建议通过 API 修改默认密码
+4. 建议立即通过管理面板修改密码
 
 ## 环境说明
 

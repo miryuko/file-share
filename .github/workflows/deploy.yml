@@ -37,7 +37,3 @@ jobs:
           workingDirectory: packages/worker
           command: deploy
           packageManager: "pnpm"
-          secrets: |
-            ADMIN_JWT_SECRET
-        env:
-          ADMIN_JWT_SECRET: ${{ secrets.ADMIN_JWT_SECRET }}
