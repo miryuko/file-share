@@ -22,6 +22,7 @@ import { CheckCircle, AlertCircle, Ban } from "lucide-vue-next";
 import FileTypeIcon from "./FileTypeIcon.vue";
 import { Progress } from "./ui/progress";
 import { Button } from "./ui/button";
+import { formatFileSize } from "../lib/utils";
 import type {
   FileUploadProgress as FileUploadProgressType,
   OverallProgress,
@@ -46,13 +47,6 @@ const hasActiveUploads = computed(() =>
 );
 
 const CHUNK_SIZE = 5 * 1024 * 1024;
-
-function formatSize(bytes: number): string {
-  if (bytes < 1024) return `${bytes} B`;
-  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
-  if (bytes < 1024 * 1024 * 1024) return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
-  return `${(bytes / (1024 * 1024 * 1024)).toFixed(2)} GB`;
-}
 
 function formatSpeed(bytesPerSec: number): string {
   if (bytesPerSec < 1024) return `${bytesPerSec} B/s`;
@@ -161,7 +155,7 @@ function formatEtaText(seconds: number): string {
 
       <!-- 完成信息 -->
       <p v-if="upload.status === 'completed'" class="text-xs text-muted-foreground">
-        {{ formatSize(upload.totalBytes) }}
+        {{ formatFileSize(upload.totalBytes) }}
       </p>
     </div>
   </div>

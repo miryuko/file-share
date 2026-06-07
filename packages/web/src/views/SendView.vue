@@ -7,6 +7,7 @@ import { useConnectionStatus } from "../composables/useConnectionStatus";
 import { useSiteConfig } from "../composables/useSiteConfig";
 import { ApiError } from "../lib/api";
 import { generateQRCodeDataURI } from "../lib/qrcode";
+import { formatFileSize } from "../lib/utils";
 import P2PTransfer from "../components/P2PTransfer.vue";
 import FileListPreview from "../components/FileListPreview.vue";
 import FileUploadProgress from "../components/FileUploadProgress.vue";
@@ -346,11 +347,6 @@ function resetAll(): void {
   showUploadOptions.value = false;
 }
 
-function formatSize(bytes: number): string {
-  if (bytes < 1024) return `${bytes} B`;
-  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
-  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
-}
 </script>
 
 <template>
@@ -682,7 +678,7 @@ function formatSize(bytes: number): string {
           class="flex items-center gap-2 border-b border-border py-2"
         >
           <span class="flex-1 truncate">{{ upload.filename }}</span>
-          <span class="text-sm text-muted-foreground">{{ formatSize(upload.totalBytes) }}</span>
+          <span class="text-sm text-muted-foreground">{{ formatFileSize(upload.totalBytes) }}</span>
           <span v-if="upload.status === 'completed'" class="font-bold text-green-600">✓</span>
           <span v-else-if="upload.status === 'error'" class="font-bold text-red-600">✗</span>
           <span v-else-if="upload.status === 'cancelled'" class="font-bold text-muted-foreground">—</span>

@@ -19,6 +19,7 @@ import { useI18n } from "vue-i18n";
 import { X, Plus } from "lucide-vue-next";
 import FileTypeIcon from "./FileTypeIcon.vue";
 import { Button } from "./ui/button";
+import { formatFileSize } from "../lib/utils";
 import type { SelectedFileInfo } from "../composables/useFileUploadManager";
 
 const { t } = useI18n();
@@ -35,13 +36,6 @@ const emit = defineEmits<{
 }>();
 
 const totalSize = computed(() => props.files.reduce((sum, f) => sum + f.size, 0));
-
-function formatSize(bytes: number): string {
-  if (bytes < 1024) return `${bytes} B`;
-  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
-  if (bytes < 1024 * 1024 * 1024) return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
-  return `${(bytes / (1024 * 1024 * 1024)).toFixed(2)} GB`;
-}
 </script>
 
 <template>
@@ -60,7 +54,7 @@ function formatSize(bytes: number): string {
       />
       <div class="min-w-0 flex-1">
         <p class="truncate text-sm font-medium">{{ f.name }}</p>
-        <p class="text-xs text-muted-foreground">{{ formatSize(f.size) }}</p>
+        <p class="text-xs text-muted-foreground">{{ formatFileSize(f.size) }}</p>
       </div>
       <Button
         v-if="!disabled"
@@ -76,7 +70,7 @@ function formatSize(bytes: number): string {
 
     <!-- 底部信息栏 -->
     <div class="flex items-center justify-between text-sm text-muted-foreground">
-      <span>{{ t('send.fileCount', { n: files.length }) }} · {{ formatSize(totalSize) }}</span>
+      <span>{{ t('send.fileCount', { n: files.length }) }} · {{ formatFileSize(totalSize) }}</span>
       <Button
         v-if="!disabled && canAddMore"
         variant="ghost"

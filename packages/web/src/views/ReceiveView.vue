@@ -3,6 +3,7 @@ import { ref, watch, onMounted } from "vue";
 import { useRoute } from "vue-router";
 import { useI18n } from "vue-i18n";
 import { getCodeInfo, getDownloadUrl, ApiError } from "../lib/api";
+import { formatFileSize } from "../lib/utils";
 import P2PTransfer from "../components/P2PTransfer.vue";
 import { Button } from "../components/ui/button";
 import { Card, CardContent } from "../components/ui/card";
@@ -91,12 +92,6 @@ async function copyTextContent(): Promise<void> {
     textCopied.value = true;
     setTimeout(() => { textCopied.value = false; }, 2000);
   } catch { /* fallback */ }
-}
-
-function formatSize(bytes: number): string {
-  if (bytes < 1024) return `${bytes} B`;
-  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
-  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
 function formatExpiry(expiresAt: number): string {
@@ -191,7 +186,7 @@ defineExpose({ codeInput });
           <CardContent class="flex items-center gap-3 p-4">
             <div class="min-w-0 flex-1">
               <p class="truncate font-medium">{{ file.filename }}</p>
-              <p class="text-xs text-muted-foreground">{{ formatSize(file.size) }}</p>
+              <p class="text-xs text-muted-foreground">{{ formatFileSize(file.size) }}</p>
             </div>
             <a :href="getDownloadUrl(session.code, file.fileId)" download>
               <Button variant="default" class="bg-green-600 hover:bg-green-700">{{ $t('receive.download') }}</Button>

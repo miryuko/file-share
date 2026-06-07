@@ -16,6 +16,7 @@ import {
 } from "../components/ui/select";
 import { Switch } from "../components/ui/switch";
 import { InputGroup, InputGroupInput, InputGroupAddon } from "../components/ui/input-group";
+import { formatFileSize } from "../lib/utils";
 
 const { t, locale } = useI18n();
 
@@ -472,12 +473,6 @@ function handleLogout(): void {
   config.value = null;
 }
 
-function formatSize(bytes: number): string {
-  if (bytes < 1024) return `${bytes} B`;
-  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
-  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
-}
-
 function formatTime(ts: number): string {
   return new Date(ts).toLocaleString(locale.value);
 }
@@ -566,11 +561,11 @@ onMounted(() => {
               <CardContent class="pt-3">
                 <div class="mb-2">
                   <p v-for="f in s.files" :key="f.fileId" class="text-sm text-muted-foreground">
-                    {{ f.filename }} ({{ formatSize(f.size) }})
+                    {{ f.filename }} ({{ formatFileSize(f.size) }})
                   </p>
                 </div>
                 <div class="mb-3 flex flex-wrap gap-4 text-xs text-muted-foreground">
-                  <span>{{ $t('admin.totalSize') }} {{ formatSize(s.totalSize) }}</span>
+                  <span>{{ $t('admin.totalSize') }} {{ formatFileSize(s.totalSize) }}</span>
                   <span>{{ $t('admin.downloads') }} {{ s.downloadCount }}/{{ s.maxDownloads }}</span>
                   <span>{{ $t('admin.created') }} {{ formatTime(s.createdAt) }}</span>
                   <span>{{ $t('admin.expires') }} {{ formatTime(s.expiresAt) }}</span>
