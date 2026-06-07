@@ -469,9 +469,9 @@ function formatTime(ts: number): string {
 
 function statusBadgeClass(status: string): string {
   switch (status) {
-    case "uploading": return "bg-amber-100 text-amber-800 border-amber-200";
-    case "ready": return "bg-green-100 text-green-800 border-green-200";
-    case "downloading": return "bg-blue-100 text-blue-800 border-blue-200";
+    case "uploading": return "bg-warning/20 text-warning border-warning/20";
+    case "ready": return "bg-success/20 text-success border-success/20";
+    case "downloading": return "bg-accent/20 text-accent-foreground border-accent/20";
     default: return "bg-muted text-muted-foreground";
   }
 }
@@ -516,10 +516,10 @@ onMounted(() => {
       <!-- 强制修改密码警告 -->
       <div
         v-if="needsPasswordChange"
-        class="mb-6 rounded-lg border-2 border-red-300 bg-red-50 px-5 py-4"
+        class="mb-6 rounded-lg border-2 border-destructive/30 bg-destructive/10 px-5 py-4"
       >
-        <p class="font-semibold text-red-700">{{ $t('admin.forcePasswordChangeTitle') }}</p>
-        <p class="mt-1 text-sm text-red-600">{{ $t('admin.forcePasswordChangeDesc') }}</p>
+        <p class="font-semibold text-destructive">{{ $t('admin.forcePasswordChangeTitle') }}</p>
+        <p class="mt-1 text-sm text-destructive">{{ $t('admin.forcePasswordChangeDesc') }}</p>
       </div>
 
       <Tabs v-model="activeTab">
@@ -557,7 +557,7 @@ onMounted(() => {
                 <Button
                   variant="outline"
                   size="sm"
-                  class="border-red-200 bg-red-50 text-red-600 hover:bg-red-100"
+                  class="border-destructive/20 bg-destructive/10 text-destructive hover:bg-destructive/20"
                   @click="handleTerminate(s.code)"
                 >
                   {{ $t('admin.terminate') }}
@@ -816,7 +816,7 @@ onMounted(() => {
               <!-- 默认密码警告 -->
               <div
                 v-if="isDefaultPwd"
-                class="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-700"
+                class="rounded-lg border border-warning/20 bg-warning/10 px-4 py-3 text-sm text-warning"
               >
                 {{ $t('admin.defaultPasswordWarning') }}
               </div>

@@ -69,9 +69,9 @@ function getStatusText(s: string): string {
 
 function dotClass(): string {
   const s = status.value;
-  if (s === "fallback" || s === "error") return "bg-red-600";
-  if (s === "connected" || s === "transferring") return "bg-green-600";
-  return "bg-amber-500 animate-pulse";
+  if (s === "fallback" || s === "error") return "bg-destructive";
+  if (s === "connected" || s === "transferring") return "bg-success";
+  return "bg-warning animate-pulse";
 }
 </script>
 
@@ -85,11 +85,11 @@ function dotClass(): string {
       v-if="status === 'connected' || status === 'transferring'"
       variant="outline"
       size="sm"
-      class="mt-2 border-red-200 bg-red-50 text-red-600 hover:bg-red-100"
+      class="mt-2 border-destructive/20 bg-destructive/10 text-destructive hover:bg-destructive/20"
       @click="cancelP2P"
     >
       {{ $t('p2p.fallbackButton') }}
     </Button>
-    <p v-if="errorMsg" class="mt-2 text-xs text-red-600">{{ errorMsg }}</p>
+    <p v-if="errorMsg" class="mt-2 text-xs text-destructive">{{ errorMsg }}</p>
   </div>
 </template>

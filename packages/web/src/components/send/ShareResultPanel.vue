@@ -52,7 +52,7 @@ async function copyCode(): Promise<void> {
         <p class="mb-2 text-sm text-muted-foreground">
           {{ type === "file" ? $t("send.shareCodeLabel") : $t("send.textCodeLabel") }}
         </p>
-        <p class="mb-4 font-mono text-4xl font-bold tracking-[0.3em] text-blue-800">
+        <p class="mb-4 font-mono text-4xl font-bold tracking-[0.3em] text-primary">
           {{ code }}
         </p>
         <img
@@ -78,8 +78,8 @@ async function copyCode(): Promise<void> {
       >
         <span class="flex-1 truncate">{{ upload.filename }}</span>
         <span class="text-sm text-muted-foreground">{{ formatFileSize(upload.totalBytes) }}</span>
-        <span v-if="upload.status === 'completed'" class="font-bold text-green-600">&#10003;</span>
-        <span v-else-if="upload.status === 'error'" class="font-bold text-red-600">&#10007;</span>
+        <span v-if="upload.status === 'completed'" class="font-bold text-success">&#10003;</span>
+        <span v-else-if="upload.status === 'error'" class="font-bold text-destructive">&#10007;</span>
         <span v-else-if="upload.status === 'cancelled'" class="font-bold text-muted-foreground">&mdash;</span>
       </div>
     </div>

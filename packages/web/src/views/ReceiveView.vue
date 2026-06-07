@@ -160,7 +160,7 @@ defineExpose({ codeInput });
     <!-- 文件列表 -->
     <div v-if="session" class="text-center">
       <div class="mb-6 flex flex-col gap-1 rounded-lg bg-muted p-4 text-sm text-foreground">
-        <span>{{ $t('receive.codeLabel') }} <strong class="text-lg text-blue-800">{{ session.code }}</strong></span>
+        <span>{{ $t('receive.codeLabel') }} <strong class="text-lg text-primary">{{ session.code }}</strong></span>
         <span>{{ formatExpiry(session.expiresAt) }}</span>
         <span>{{ $t('receive.remainingDownloads', { n: session.remainingDownloads }) }}</span>
       </div>
@@ -172,14 +172,14 @@ defineExpose({ codeInput });
       />
 
       <div class="text-left">
-        <Card v-for="file in session.files" :key="file.fileId" class="mb-2 hover:border-blue-500">
+        <Card v-for="file in session.files" :key="file.fileId" class="mb-2 hover:border-primary/50">
           <CardContent class="flex items-center gap-3 p-4">
             <div class="min-w-0 flex-1">
               <p class="truncate font-medium">{{ file.filename }}</p>
               <p class="text-xs text-muted-foreground">{{ formatFileSize(file.size) }}</p>
             </div>
             <a :href="getDownloadUrl(session.code, file.fileId)" download>
-              <Button variant="default" class="bg-green-600 hover:bg-green-700">{{ $t('receive.download') }}</Button>
+              <Button class="bg-success text-success-foreground hover:bg-success/90">{{ $t('receive.download') }}</Button>
             </a>
           </CardContent>
         </Card>

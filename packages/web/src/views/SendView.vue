@@ -234,7 +234,7 @@ function resetAll(): void {
     <!-- 连接状态横幅 -->
     <div
       v-if="!isOnline"
-      class="mb-4 flex items-center justify-center gap-2 rounded-lg border border-amber-200 bg-amber-50 px-4 py-2 text-sm text-amber-700"
+      class="mb-4 flex items-center justify-center gap-2 rounded-lg border border-warning/20 bg-warning/10 px-4 py-2 text-sm text-warning"
     >
       <WifiOff :size="16" />
       {{ $t("send.connectionOffline") }}

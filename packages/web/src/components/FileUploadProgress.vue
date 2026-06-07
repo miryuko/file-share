@@ -105,12 +105,12 @@ function formatEtaText(seconds: number): string {
         <CheckCircle
           v-if="upload.status === 'completed'"
           :size="18"
-          class="flex-shrink-0 text-green-600"
+          class="flex-shrink-0 text-success"
         />
         <AlertCircle
           v-else-if="upload.status === 'error'"
           :size="18"
-          class="flex-shrink-0 text-red-600"
+          class="flex-shrink-0 text-destructive"
         />
         <Ban
           v-else-if="upload.status === 'cancelled'"
@@ -142,7 +142,7 @@ function formatEtaText(seconds: number): string {
 
       <!-- 错误信息 + 重试 -->
       <div v-if="upload.status === 'error'" class="mt-2">
-        <p class="mb-1 text-xs text-red-600">{{ upload.error }}</p>
+        <p class="mb-1 text-xs text-destructive">{{ upload.error }}</p>
         <Button variant="outline" size="sm" @click="emit('retryFile', index)">
           {{ $t('send.retry') }}
         </Button>
