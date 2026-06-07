@@ -136,4 +136,13 @@
   body {
     @apply bg-background text-foreground;
   }
+  /* 交互组件默认不可选中文本，避免双击等操作触发文本选择 */
+  button,
+  [data-slot="select-trigger"],
+  [data-slot="tabs-trigger"],
+  [data-slot="switch"],
+  [data-slot="badge"],
+  .select-none-interactive {
+    user-select: none;
+  }
 }
