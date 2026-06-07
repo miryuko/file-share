@@ -54,6 +54,8 @@ const isDefaultPwd = ref(false);
 const needsPasswordChange = ref(false);
 const isSavingConfig = ref(false);
 
+const siteConfigFormRef = ref<InstanceType<typeof SiteConfigForm> | null>(null);
+
 // ── 认证 ──
 
 function getAuthHeaders(): Record<string, string> {
@@ -96,6 +98,7 @@ async function loadData(): Promise<void> {
 
     if (configRes.ok) {
       config.value = await configRes.json() as AdminConfig;
+      siteConfigFormRef.value?.initFields();
     }
 
     if (checkRes.ok) {
@@ -133,6 +136,7 @@ async function handleSaveConfig(): Promise<void> {
     if (res.status === 401) { handleLogout(); return; }
     if (res.ok) {
       config.value = await res.json() as AdminConfig;
+      siteConfigFormRef.value?.initFields();
       toast.success(t("admin.configSaved"));
     }
   } catch { /* 静默处理 */ } finally {
@@ -232,6 +236,7 @@ onMounted(() => {
         <!-- 站点配置 -->
         <TabsContent value="config">
           <SiteConfigForm
+            ref="siteConfigFormRef"
             v-if="config"
             v-model:config="config"
             :is-saving="isSavingConfig"
