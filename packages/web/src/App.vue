@@ -11,6 +11,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import ModeToggle from '@/components/ModeToggle.vue'
+import { Toaster } from '@/components/ui/sonner'
 import { useSiteConfig } from '@/composables/useSiteConfig'
 
 const { t, locale } = useI18n()
@@ -101,5 +102,7 @@ function currentNativeName(): string {
     <footer class="border-t px-4 py-6 text-center text-xs text-muted-foreground">
       <p>{{ config.footerNotice || $t('app.footer.notice') }}</p>
     </footer>
+
+    <Toaster rich-colors close-button />
   </div>
 </template>

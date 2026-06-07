@@ -2,6 +2,7 @@
 import { ref, watch, onMounted } from "vue";
 import { useRoute } from "vue-router";
 import { useI18n } from "vue-i18n";
+import { toast } from "vue-sonner";
 import { getCodeInfo, getDownloadUrl, ApiError } from "../lib/api";
 import { formatFileSize } from "../lib/utils";
 import P2PTransfer from "../components/P2PTransfer.vue";
@@ -21,7 +22,6 @@ interface FileInfo {
 
 const codeInput = ref("");
 const isLoading = ref(false);
-const errorMessage = ref("");
 const session = ref<{
   code: string;
   files: FileInfo[];
@@ -30,7 +30,6 @@ const session = ref<{
 } | null>(null);
 
 const textResult = ref<{ content: string; expiresAt: number } | null>(null);
-const textCopied = ref(false);
 
 
 // 自动过滤和转大写
@@ -49,12 +48,11 @@ function onOtpComplete(): void {
 async function handleReceive(): Promise<void> {
   const code = codeInput.value.trim().toUpperCase();
   if (code.length !== 6) {
-    errorMessage.value = t('receive.invalidCode');
+    toast.error(t('receive.invalidCode'));
     return;
   }
 
   isLoading.value = true;
-  errorMessage.value = "";
   session.value = null;
   textResult.value = null;
 
@@ -76,9 +74,9 @@ async function handleReceive(): Promise<void> {
     }
   } catch (err) {
     if (err instanceof ApiError) {
-      errorMessage.value = err.message;
+      toast.error(err.message);
     } else {
-      errorMessage.value = t('receive.queryError');
+      toast.error(t('receive.queryError'));
     }
   } finally {
     isLoading.value = false;
@@ -89,8 +87,7 @@ async function copyTextContent(): Promise<void> {
   if (!textResult.value) return;
   try {
     await navigator.clipboard.writeText(textResult.value.content);
-    textCopied.value = true;
-    setTimeout(() => { textCopied.value = false; }, 2000);
+    toast.success(t('receive.copied'));
   } catch { /* fallback */ }
 }
 
@@ -116,7 +113,6 @@ function reset(): void {
   session.value = null;
   textResult.value = null;
   codeInput.value = "";
-  errorMessage.value = "";
 }
 
 // 支持从 URL 路由 /receive/:code 自动查询
@@ -158,12 +154,6 @@ defineExpose({ codeInput });
         <Button :disabled="codeInput.length !== 6 || isLoading" @click="handleReceive">
           {{ isLoading ? $t('receive.searching') : $t('receive.receive') }}
         </Button>
-      </div>
-      <div
-        v-if="errorMessage"
-        class="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600 dark:border-red-800 dark:bg-red-950 dark:text-red-400"
-      >
-        {{ errorMessage }}
       </div>
     </div>
 
@@ -212,7 +202,7 @@ defineExpose({ codeInput });
         <span>{{ $t('send.charCount', { count: [...textResult.content].length.toLocaleString() }) }}</span>
       </div>
       <Button class="mb-4" @click="copyTextContent">
-        {{ textCopied ? $t('receive.copied') : $t('receive.copy') }}
+        {{ $t('receive.copy') }}
       </Button>
       <Button variant="secondary" class="mt-4 w-full" @click="reset">
         {{ $t('receive.receiveOtherContent') }}

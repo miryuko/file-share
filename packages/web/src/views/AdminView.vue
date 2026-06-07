@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted } from "vue";
 import { useI18n } from "vue-i18n";
+import { toast } from "vue-sonner";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { Textarea } from "../components/ui/textarea";
@@ -24,7 +25,6 @@ const TOKEN_KEY = "admin_token";
 
 const isLoggedIn = ref(false);
 const password = ref("");
-const loginError = ref("");
 const isLoading = ref(false);
 
 interface SessionItem {
@@ -58,7 +58,6 @@ const activeTab = ref("sessions");
 
 // ── 站点配置表单 ──
 const isSavingConfig = ref(false);
-const configSaved = ref(false);
 
 // 单位选项
 const SIZE_UNITS = [
@@ -281,15 +280,12 @@ const currentPassword = ref("");
 const newPassword = ref("");
 const confirmPassword = ref("");
 const isChangingPassword = ref(false);
-const passwordError = ref("");
-const passwordSuccess = ref(false);
 const isDefaultPwd = ref(false);
 const needsPasswordChange = ref(false);
 
 // ── 登录 ──
 async function handleLogin(): Promise<void> {
   isLoading.value = true;
-  loginError.value = "";
 
   try {
     const res = await fetch("/api/admin/login", {
@@ -302,9 +298,9 @@ async function handleLogin(): Promise<void> {
 
     if (!res.ok) {
       if (res.status === 429) {
-        loginError.value = body.message || t("admin.lockedOut");
+        toast.error(body.message || t("admin.lockedOut"));
       } else {
-        loginError.value = body.message || t("admin.loginFailed");
+        toast.error(body.message || t("admin.loginFailed"));
       }
       return;
     }
@@ -322,7 +318,7 @@ async function handleLogin(): Promise<void> {
     }
     await loadData();
   } catch {
-    loginError.value = t("admin.networkError");
+    toast.error(t("admin.networkError"));
   } finally {
     isLoading.value = false;
   }
@@ -394,7 +390,6 @@ async function handleTerminate(code: string): Promise<void> {
 async function handleSaveConfig(): Promise<void> {
   if (!config.value) return;
   isSavingConfig.value = true;
-  configSaved.value = false;
 
   try {
     const res = await fetch("/api/admin/config", {
@@ -407,8 +402,7 @@ async function handleSaveConfig(): Promise<void> {
 
     if (res.ok) {
       config.value = await res.json() as AdminConfig;
-      configSaved.value = true;
-      setTimeout(() => { configSaved.value = false; }, 3000);
+      toast.success(t("admin.configSaved"));
     }
   } catch {
     // 静默处理
@@ -419,15 +413,12 @@ async function handleSaveConfig(): Promise<void> {
 
 // ── 密码修改 ──
 async function handleChangePassword(): Promise<void> {
-  passwordError.value = "";
-  passwordSuccess.value = false;
-
   if (!newPassword.value) {
-    passwordError.value = t("admin.passwordEmpty");
+    toast.error(t("admin.passwordEmpty"));
     return;
   }
   if (newPassword.value !== confirmPassword.value) {
-    passwordError.value = t("admin.passwordMismatch");
+    toast.error(t("admin.passwordMismatch"));
     return;
   }
 
@@ -448,19 +439,18 @@ async function handleChangePassword(): Promise<void> {
     const body = await res.json();
 
     if (!res.ok) {
-      passwordError.value = body.message || t("admin.passwordChangeFailed");
+      toast.error(body.message || t("admin.passwordChangeFailed"));
       return;
     }
 
-    passwordSuccess.value = true;
+    toast.success(t("admin.passwordChanged"));
     isDefaultPwd.value = false;
     needsPasswordChange.value = false;
     currentPassword.value = "";
     newPassword.value = "";
     confirmPassword.value = "";
-    setTimeout(() => { passwordSuccess.value = false; }, 3000);
   } catch {
-    passwordError.value = t("admin.networkError");
+    toast.error(t("admin.networkError"));
   } finally {
     isChangingPassword.value = false;
   }
@@ -512,12 +502,6 @@ onMounted(() => {
         <Button :disabled="!password || isLoading" @click="handleLogin">
           {{ isLoading ? $t('admin.loggingIn') : $t('admin.login') }}
         </Button>
-      </div>
-      <div
-        v-if="loginError"
-        class="mt-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600"
-      >
-        {{ loginError }}
       </div>
     </div>
 
@@ -817,7 +801,6 @@ onMounted(() => {
                 <Button @click="handleSaveConfig" :disabled="isSavingConfig">
                   {{ isSavingConfig ? $t('admin.saving') : $t('admin.saveConfig') }}
                 </Button>
-                <span v-if="configSaved" class="text-sm text-green-600">{{ $t('admin.configSaved') }}</span>
               </div>
             </CardContent>
           </Card>
@@ -856,19 +839,6 @@ onMounted(() => {
                   </div>
                 </div>
               </fieldset>
-
-              <div
-                v-if="passwordError"
-                class="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600"
-              >
-                {{ passwordError }}
-              </div>
-              <div
-                v-if="passwordSuccess"
-                class="rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-600"
-              >
-                {{ $t('admin.passwordChanged') }}
-              </div>
 
               <div class="border-t pt-4">
                 <Button @click="handleChangePassword" :disabled="isChangingPassword">

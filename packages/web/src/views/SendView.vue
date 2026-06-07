@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, watch, computed } from "vue";
 import { useI18n } from "vue-i18n";
+import { toast } from "vue-sonner";
 import { Upload, WifiOff, ChevronDown, ChevronRight } from "lucide-vue-next";
 import { useFileUploadManager } from "../composables/useFileUploadManager";
 import { useConnectionStatus } from "../composables/useConnectionStatus";
@@ -152,16 +153,10 @@ const qrCodeURI = ref("");
 
 const fileInput = ref<HTMLInputElement | null>(null);
 const dragOver = ref(false);
-const uploadError = ref("");
-const copied = ref(false);
-/** 添加文件时的警告信息（如部分文件被拒绝） */
-const addWarnings = ref<string[]>([]);
 
 const textContent = ref("");
 const textCode = ref("");
 const textLoading = ref(false);
-const textError = ref("");
-const textCopied = ref(false);
 
 /** 是否显示文件审核阶段 */
 const showFileReview = computed(
@@ -190,19 +185,23 @@ watch(
   },
 );
 
+// 上传完成后部分成功提示
+watch(phase, (p) => {
+  if (p === "completed" && fileUploads.value.some((f) => f.status === "error")) {
+    toast.warning(t("send.partialSuccess"));
+  }
+});
+
 // ── 文件处理 ──
 
 async function handleFiles(selectedFiles: FileList | File[]): Promise<void> {
-  uploadError.value = "";
-  addWarnings.value = [];
-
   const fileArray = Array.from(
     "length" in selectedFiles ? selectedFiles : selectedFiles,
   );
 
   const result = await addFiles(fileArray);
-  if (result.errors.length > 0) {
-    addWarnings.value = result.errors;
+  for (const err of result.errors) {
+    toast.warning(err);
   }
 }
 
@@ -250,7 +249,6 @@ function onPaste(event: ClipboardEvent): void {
 // ── 上传操作 ──
 
 async function sendFiles(): Promise<void> {
-  uploadError.value = "";
   try {
     await startUpload({
       ttlSeconds: selectedTTL.value,
@@ -258,9 +256,9 @@ async function sendFiles(): Promise<void> {
     });
   } catch (err) {
     if (err instanceof ApiError) {
-      uploadError.value = err.message;
+      toast.error(err.message);
     } else if (err instanceof Error && err.message !== "没有可上传的文件") {
-      uploadError.value = t("send.uploadError");
+      toast.error(t("send.uploadError"));
     }
   }
 }
@@ -275,10 +273,7 @@ async function copyCode(): Promise<void> {
   if (!shareCode.value) return;
   try {
     await navigator.clipboard.writeText(buildShareUrl(shareCode.value));
-    copied.value = true;
-    setTimeout(() => {
-      copied.value = false;
-    }, 2000);
+    toast.success(t("send.copied"));
   } catch {
     /* fallback */
   }
@@ -287,21 +282,20 @@ async function copyCode(): Promise<void> {
 // ── 文本分享 ──
 
 async function handleTextSend(): Promise<void> {
-  textError.value = "";
   const content = textContent.value.trim();
 
   if (!content) {
-    textError.value = t("send.validation.textEmpty");
+    toast.error(t("send.validation.textEmpty"));
     return;
   }
 
   const maxTextSize = config.value.maxTextSize;
   const charCount = [...content].length;
   if (maxTextSize !== -1 && charCount > maxTextSize) {
-    textError.value = t("send.validation.textTooLong", {
+    toast.error(t("send.validation.textTooLong", {
       count: charCount,
       limit: maxTextSize,
-    });
+    }));
     return;
   }
 
@@ -315,14 +309,14 @@ async function handleTextSend(): Promise<void> {
 
     if (!res.ok) {
       const body = (await res.json()) as { message: string };
-      textError.value = body.message || t("send.sendFailed");
+      toast.error(body.message || t("send.sendFailed"));
       return;
     }
 
     const { code } = (await res.json()) as { code: string };
     textCode.value = code;
   } catch {
-    textError.value = t("send.networkError");
+    toast.error(t("send.networkError"));
   } finally {
     textLoading.value = false;
   }
@@ -332,10 +326,7 @@ async function copyTextCode(): Promise<void> {
   if (!textCode.value) return;
   try {
     await navigator.clipboard.writeText(buildShareUrl(textCode.value));
-    textCopied.value = true;
-    setTimeout(() => {
-      textCopied.value = false;
-    }, 2000);
+    toast.success(t("send.copied"));
   } catch {
     /* fallback */
   }
@@ -345,9 +336,6 @@ function resetAll(): void {
   resetUpload();
   textCode.value = "";
   textContent.value = "";
-  textError.value = "";
-  uploadError.value = "";
-  addWarnings.value = [];
   selectedTTL.value = undefined;
   selectedDownloads.value = undefined;
   showUploadOptions.value = false;
@@ -408,23 +396,6 @@ function resetAll(): void {
               @remove="removeFile"
               @add-more="triggerFileInput"
             />
-
-            <!-- 添加文件时的警告 -->
-            <div
-              v-for="(warn, idx) in addWarnings"
-              :key="idx"
-              class="rounded-lg border border-amber-200 bg-amber-50 px-4 py-2 text-sm text-amber-700"
-            >
-              {{ warn }}
-            </div>
-
-            <!-- 上传错误 -->
-            <div
-              v-if="uploadError"
-              class="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600"
-            >
-              {{ uploadError }}
-            </div>
 
             <!-- 上传选项（可折叠） -->
             <div class="rounded-lg border border-border">
@@ -547,22 +518,6 @@ function resetAll(): void {
               <p class="text-xs text-muted-foreground">{{ fileLimitsText }}</p>
             </div>
 
-            <!-- 添加文件警告 -->
-            <div
-              v-for="(warn, idx) in addWarnings"
-              :key="idx"
-              class="mt-4 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-700"
-            >
-              {{ warn }}
-            </div>
-
-            <!-- 上传错误 -->
-            <div
-              v-if="uploadError"
-              class="mt-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600"
-            >
-              {{ uploadError }}
-            </div>
           </div>
         </template>
 
@@ -574,13 +529,6 @@ function resetAll(): void {
           @cancel="handleCancel"
         />
 
-        <!-- 上传错误（会话创建失败等） -->
-        <div
-          v-if="uploadError && !showUploadProgress"
-          class="mt-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600"
-        >
-          {{ uploadError }}
-        </div>
       </TabsContent>
 
       <!-- 文本 Tab -->
@@ -601,12 +549,6 @@ function resetAll(): void {
           >
             {{ textLoading ? $t("send.sending") : $t("send.sendText") }}
           </Button>
-        </div>
-        <div
-          v-if="textError"
-          class="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600"
-        >
-          {{ textError }}
         </div>
       </TabsContent>
     </Tabs>
@@ -630,7 +572,7 @@ function resetAll(): void {
             height="160"
           />
           <Button @click="copyTextCode">
-            {{ textCopied ? $t("send.copied") : $t("send.copy") }}
+            {{ $t("send.copy") }}
           </Button>
         </CardContent>
       </Card>
@@ -641,14 +583,6 @@ function resetAll(): void {
 
     <!-- 文件上传完成 -->
     <div v-if="showUploadResult" class="text-center">
-      <!-- 部分成功提示 -->
-      <div
-        v-if="fileUploads.some((f) => f.status === 'error')"
-        class="mb-4 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-700"
-      >
-        {{ $t("send.partialSuccess") }}
-      </div>
-
       <Card class="mb-6 bg-muted">
         <CardContent class="p-8 text-center">
           <p class="mb-2 text-sm text-muted-foreground">
@@ -666,7 +600,7 @@ function resetAll(): void {
             height="160"
           />
           <Button @click="copyCode">
-            {{ copied ? $t("send.copied") : $t("send.copy") }}
+            {{ $t("send.copy") }}
           </Button>
         </CardContent>
       </Card>
