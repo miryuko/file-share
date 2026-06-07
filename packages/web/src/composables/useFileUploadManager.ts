@@ -173,7 +173,7 @@ export function useFileUploadManager(): {
 
     for (const file of files) {
       // 检查文件总数上限
-      if (maxFiles !== -1 && selectedFiles.value.length + result.added >= maxFiles) {
+      if (maxFiles !== -1 && selectedFiles.value.length >= maxFiles) {
         result.rejected++;
         result.errors.push(`已达最大文件数限制（${maxFiles} 个），"${file.name}" 未添加`);
         continue;
