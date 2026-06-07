@@ -72,7 +72,7 @@ describe("useSiteConfig", () => {
       json: async () => ({
         siteTitle: "",
         maxFileSize: 0,
-        maxTotalSize: -1,
+        maxTotalSize: 0,
       }),
     } as unknown as Response);
 
@@ -88,6 +88,32 @@ describe("useSiteConfig", () => {
     // 缺失字段应使用默认值
     expect(config.value.maxFiles).toBe(20);
     expect(config.value.maxTextSize).toBe(100000);
+  });
+
+  it("远程配置 -1 应接受为无限制", async () => {
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({
+        siteTitle: "Test",
+        maxFileSize: -1,
+        maxTotalSize: -1,
+        maxFiles: -1,
+        maxTextSize: -1,
+        ttlSeconds: -1,
+        maxDownloads: -1,
+      }),
+    } as unknown as Response);
+
+    const { useSiteConfig } = await import("../../../src/composables/useSiteConfig");
+    const { config, load } = useSiteConfig();
+    await load();
+
+    expect(config.value.maxFileSize).toBe(-1);
+    expect(config.value.maxTotalSize).toBe(-1);
+    expect(config.value.maxFiles).toBe(-1);
+    expect(config.value.maxTextSize).toBe(-1);
+    expect(config.value.ttlSeconds).toBe(-1);
+    expect(config.value.maxDownloads).toBe(-1);
   });
 
   it("重复调用 load 不应重复请求", async () => {
