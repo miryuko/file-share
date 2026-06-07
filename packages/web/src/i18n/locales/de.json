@@ -44,7 +44,8 @@
       "totalTooBig": "Gesamtgröße überschreitet das Limit von {limit}MB",
       "textEmpty": "Bitte geben Sie den zu teilenden Text ein",
       "textTooLong": "Text zu lang ({count} Zeichen), Limit ist {limit} Zeichen"
-    }
+    },
+    "charCount": "{count} Zeichen"
   },
   "receive": {
     "title": "Empfangen",
@@ -134,3 +135,4 @@
     "sendFailed": "P2P-Senden fehlgeschlagen, schalte auf Server-Relay um"
   }
 }
+

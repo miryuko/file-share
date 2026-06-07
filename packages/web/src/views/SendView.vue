@@ -589,7 +589,7 @@ function formatSize(bytes: number): string {
         />
         <div class="flex items-center justify-between">
           <span class="text-xs text-muted-foreground">
-            {{ [...textContent].length.toLocaleString() }} chars
+            {{ $t('send.charCount', { count: [...textContent].length.toLocaleString() }) }}
           </span>
           <Button
             :disabled="!textContent.trim() || textLoading"

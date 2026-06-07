@@ -44,7 +44,8 @@
       "totalTooBig": "合計ファイルサイズが{limit}MBの制限を超えています",
       "textEmpty": "共有するテキストを入力してください",
       "textTooLong": "テキストが長すぎます（{count} 文字）、制限は {limit} 文字です"
-    }
+    },
+    "charCount": "{count} 文字"
   },
   "receive": {
     "title": "受信",

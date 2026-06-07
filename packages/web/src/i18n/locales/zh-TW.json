@@ -44,7 +44,8 @@
       "totalTooBig": "總檔案大小超過 {limit}MB 限制",
       "textEmpty": "請輸入要分享的文字內容",
       "textTooLong": "文字過長（{count} 字元），目前限制 {limit} 字元"
-    }
+    },
+    "charCount": "{count} 字元"
   },
   "receive": {
     "title": "接收",

@@ -44,7 +44,8 @@
       "totalTooBig": "La taille totale dépasse la limite de {limit}MB",
       "textEmpty": "Veuillez saisir le contenu texte à partager",
       "textTooLong": "Texte trop long ({count} caractères), limite de {limit} caractères"
-    }
+    },
+    "charCount": "{count} caractères"
   },
   "receive": {
     "title": "Recevoir",
@@ -134,3 +135,4 @@
     "sendFailed": "Échec de l'envoi P2P, basculement vers le relais serveur"
   }
 }
+

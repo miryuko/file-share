@@ -44,7 +44,8 @@
       "totalTooBig": "총 파일 크기가 {limit}MB 제한을 초과합니다",
       "textEmpty": "공유할 텍스트를 입력하세요",
       "textTooLong": "텍스트가 너무 깁니다 ({count} 자), 제한은 {limit} 자입니다"
-    }
+    },
+    "charCount": "{count} 자"
   },
   "receive": {
     "title": "받기",

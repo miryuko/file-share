@@ -214,7 +214,7 @@ defineExpose({ codeInput });
       </Card>
       <div class="mb-4 flex justify-between text-xs text-muted-foreground">
         <span>{{ formatExpiry(textResult.expiresAt) }}</span>
-        <span>{{ [...textResult.content].length.toLocaleString() }} chars</span>
+        <span>{{ $t('send.charCount', { count: [...textResult.content].length.toLocaleString() }) }}</span>
       </div>
       <Button class="mb-4" @click="copyTextContent">
         {{ textCopied ? $t('receive.copied') : $t('receive.copy') }}
