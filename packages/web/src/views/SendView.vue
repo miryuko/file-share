@@ -1,22 +1,28 @@
 <script setup lang="ts">
+/**
+ * SendView — 文件/文本分享页面
+ *
+ * 职责：作为顶层编排器，组合子组件并协调数据流。
+ * 不负责具体的 UI 渲染逻辑，将其委托给 components/send/ 下的子组件。
+ */
 import { ref, watch, computed } from "vue";
 import { useI18n } from "vue-i18n";
 import { toast } from "vue-sonner";
-import { Upload, WifiOff, ChevronDown, ChevronRight } from "lucide-vue-next";
+import { WifiOff } from "lucide-vue-next";
 import { useFileUploadManager } from "../composables/useFileUploadManager";
 import { useConnectionStatus } from "../composables/useConnectionStatus";
 import { useSiteConfig } from "../composables/useSiteConfig";
 import { ApiError } from "../lib/api";
 import { generateQRCodeDataURI } from "../lib/qrcode";
-import { formatFileSize } from "../lib/utils";
-import P2PTransfer from "../components/P2PTransfer.vue";
+import FileDropZone from "../components/send/FileDropZone.vue";
+import UploadOptionsPanel from "../components/send/UploadOptionsPanel.vue";
+import ShareResultPanel from "../components/send/ShareResultPanel.vue";
 import FileListPreview from "../components/FileListPreview.vue";
 import FileUploadProgress from "../components/FileUploadProgress.vue";
+import P2PTransfer from "../components/P2PTransfer.vue";
 import { Button } from "../components/ui/button";
-import { Card, CardContent } from "../components/ui/card";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "../components/ui/tabs";
 import { Textarea } from "../components/ui/textarea";
-import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from "../components/ui/select";
 
 const { t } = useI18n();
 const { config } = useSiteConfig();
@@ -57,123 +63,36 @@ const {
 } = useFileUploadManager();
 
 // ── 上传选项 ──
-/** 是否展开上传选项面板 */
-const showUploadOptions = ref(false);
-
-/** TTL 预设值（秒） */
-const TTL_PRESETS = [
-  { label: "10 分钟", value: 600 },
-  { label: "30 分钟", value: 1800 },
-  { label: "1 小时", value: 3600 },
-  { label: "6 小时", value: 21600 },
-  { label: "24 小时", value: 86400 },
-  { label: "7 天", value: 604800 },
-  { label: "30 天", value: 2592000 },
-];
-
-/** 下载次数预设 */
-const DOWNLOAD_PRESETS = [1, 3, 5, 10, 20, 50, 100];
-
-/** 可选的 TTL 选项（不超过站点配置上限） */
-const ttlOptions = computed(() => {
-  const max = config.value.ttlSeconds;
-  const options = TTL_PRESETS.filter((p) => max === -1 || p.value <= max);
-  if (max === -1) {
-    options.push({ label: t("send.uploadOptions.forever"), value: -1 });
-  }
-  return options;
-});
-
-/** 可选的下载次数（不超过站点配置上限） */
-const downloadOptions = computed(() => {
-  const max = config.value.maxDownloads;
-  const options = DOWNLOAD_PRESETS.filter((n) => max === -1 || n <= max);
-  if (max === -1) {
-    options.push(-1); // "无限制"
-  }
-  return options;
-});
-
-/** 用户选择的过期时间（秒），undefined 表示使用站点默认值 */
 const selectedTTL = ref<number | undefined>(undefined);
-/** 用户选择的最大下载次数，undefined 表示使用站点默认值 */
 const selectedDownloads = ref<number | undefined>(undefined);
 
-/** TTL 上限提示文案 */
-const ttlLimitHint = computed(() => {
-  const max = config.value.ttlSeconds;
-  if (max === -1) return t("send.uploadOptions.expirationLimitUnlimited");
-  return t("send.uploadOptions.expirationLimitOff", {
-    limit: formatDuration(max),
-  });
-});
+// ── 文件输入引用（保留用于粘贴场景中触发文件选择） ──
+const fileInput = ref<HTMLInputElement | null>(null);
 
-/** 下载次数上限提示文案 */
-const downloadsLimitHint = computed(() => {
-  const max = config.value.maxDownloads;
-  if (max === -1) return t("send.uploadOptions.downloadsLimitUnlimited");
-  return t("send.uploadOptions.downloadsLimitOff", { max });
-});
+// ── 文本分享 ──
+const textContent = ref("");
+const textCode = ref("");
+const textLoading = ref(false);
 
-/** 格式化秒数为可读字符串 */
-function formatDuration(seconds: number): string {
-  if (seconds < 60) return `${seconds} 秒`;
-  if (seconds < 3600) return `${Math.round(seconds / 60)} 分钟`;
-  if (seconds < 86400) return `${Math.round(seconds / 3600)} 小时`;
-  return `${Math.round(seconds / 86400)} 天`;
-}
-
-/** 格式化 TTL 选项标签 */
-function ttlOptionLabel(value: number): string {
-  if (value === -1) return t("send.uploadOptions.forever");
-  return formatDuration(value);
-}
-
-/** 格式化下载选项标签 */
-function downloadOptionLabel(value: number): string {
-  if (value === -1) return t("send.uploadOptions.unlimited");
-  return `${value} 次`;
-}
-
-/** 处理 TTL 选择变更 */
-function onTTLChange(value: unknown): void {
-  selectedTTL.value = String(value) === "__default__" ? undefined : Number(value);
-}
-
-/** 处理下载次数选择变更 */
-function onDownloadsChange(value: unknown): void {
-  selectedDownloads.value = String(value) === "__default__" ? undefined : Number(value);
-}
+// ── QR 码 ──
+const qrCodeURI = ref("");
 
 function buildShareUrl(code: string): string {
   return `${window.location.origin}/receive/${code}`;
 }
 
-const qrCodeURI = ref("");
-
-const fileInput = ref<HTMLInputElement | null>(null);
-const dragOver = ref(false);
-
-const textContent = ref("");
-const textCode = ref("");
-const textLoading = ref(false);
-
-/** 是否显示文件审核阶段 */
+// ── 阶段计算 ──
 const showFileReview = computed(
   () => phase.value === "selecting" && selectedFiles.value.length > 0,
 );
-
-/** 是否显示上传进度 */
 const showUploadProgress = computed(() => phase.value === "uploading");
-
-/** 是否显示上传结果 */
 const showUploadResult = computed(
   () =>
     (phase.value === "completed" || phase.value === "error" || phase.value === "cancelled") &&
     shareCode.value !== "",
 );
 
-// 分享码变化时异步生成 QR 码（编码完整 URL）
+// 分享码变化时异步生成 QR 码
 watch(
   () => shareCode.value || textCode.value,
   async (code) => {
@@ -194,12 +113,8 @@ watch(phase, (p) => {
 
 // ── 文件处理 ──
 
-async function handleFiles(selectedFiles: FileList | File[]): Promise<void> {
-  const fileArray = Array.from(
-    "length" in selectedFiles ? selectedFiles : selectedFiles,
-  );
-
-  const result = await addFiles(fileArray);
+async function handleFiles(files: File[]): Promise<void> {
+  const result = await addFiles(files);
   for (const err of result.errors) {
     toast.warning(err);
   }
@@ -208,16 +123,8 @@ async function handleFiles(selectedFiles: FileList | File[]): Promise<void> {
 function onFileChange(event: Event): void {
   const input = event.target as HTMLInputElement;
   if (input.files) {
-    handleFiles(input.files);
-    // 重置 input 以便可以重新选择相同文件
+    handleFiles(Array.from(input.files));
     input.value = "";
-  }
-}
-
-function onDrop(event: DragEvent): void {
-  dragOver.value = false;
-  if (event.dataTransfer?.files && event.dataTransfer.files.length > 0) {
-    handleFiles(event.dataTransfer.files);
   }
 }
 
@@ -263,22 +170,6 @@ async function sendFiles(): Promise<void> {
   }
 }
 
-function handleCancel(): void {
-  cancelUpload();
-}
-
-// ── 分享码操作 ──
-
-async function copyCode(): Promise<void> {
-  if (!shareCode.value) return;
-  try {
-    await navigator.clipboard.writeText(buildShareUrl(shareCode.value));
-    toast.success(t("send.copied"));
-  } catch {
-    /* fallback */
-  }
-}
-
 // ── 文本分享 ──
 
 async function handleTextSend(): Promise<void> {
@@ -292,10 +183,7 @@ async function handleTextSend(): Promise<void> {
   const maxTextSize = config.value.maxTextSize;
   const charCount = [...content].length;
   if (maxTextSize !== -1 && charCount > maxTextSize) {
-    toast.error(t("send.validation.textTooLong", {
-      count: charCount,
-      limit: maxTextSize,
-    }));
+    toast.error(t("send.validation.textTooLong", { count: charCount, limit: maxTextSize }));
     return;
   }
 
@@ -322,15 +210,7 @@ async function handleTextSend(): Promise<void> {
   }
 }
 
-async function copyTextCode(): Promise<void> {
-  if (!textCode.value) return;
-  try {
-    await navigator.clipboard.writeText(buildShareUrl(textCode.value));
-    toast.success(t("send.copied"));
-  } catch {
-    /* fallback */
-  }
-}
+// ── 重置 ──
 
 function resetAll(): void {
   resetUpload();
@@ -338,9 +218,7 @@ function resetAll(): void {
   textContent.value = "";
   selectedTTL.value = undefined;
   selectedDownloads.value = undefined;
-  showUploadOptions.value = false;
 }
-
 </script>
 
 <template>
@@ -375,7 +253,6 @@ function resetAll(): void {
 
       <!-- 文件 Tab -->
       <TabsContent value="file" class="mt-4">
-        <!-- 隐藏的文件选择 input，始终在 DOM 中 -->
         <input
           ref="fileInput"
           type="file"
@@ -384,9 +261,8 @@ function resetAll(): void {
           @change="onFileChange"
         />
 
-        <!-- 阶段 1：文件选择 -->
         <template v-if="!showUploadProgress && !showUploadResult">
-          <!-- 审核阶段：显示文件列表 -->
+          <!-- 审核阶段 -->
           <div v-if="showFileReview" class="space-y-4">
             <FileListPreview
               :files="selectedFiles"
@@ -397,103 +273,14 @@ function resetAll(): void {
               @add-more="triggerFileInput"
             />
 
-            <!-- 上传选项（可折叠） -->
-            <div class="rounded-lg border border-border">
-              <button
-                class="flex w-full items-center justify-between px-4 py-3 text-sm font-medium hover:bg-accent/50"
-                @click="showUploadOptions = !showUploadOptions"
-              >
-                <span>{{ $t("send.uploadOptions.title") }}</span>
-                <ChevronRight
-                  v-if="!showUploadOptions"
-                  :size="16"
-                  class="text-muted-foreground"
-                />
-                <ChevronDown
-                  v-else
-                  :size="16"
-                  class="text-muted-foreground"
-                />
-              </button>
-
-              <div v-if="showUploadOptions" class="space-y-4 border-t border-border px-4 py-4">
-                <!-- 过期时间 -->
-                <div class="space-y-2">
-                  <label class="text-sm font-medium">
-                    {{ $t("send.uploadOptions.expiration") }}
-                  </label>
-                  <p class="text-xs text-muted-foreground">
-                    {{ $t("send.uploadOptions.expirationHint") }}
-                  </p>
-                  <Select
-                    :model-value="selectedTTL !== undefined ? String(selectedTTL) : '__default__'"
-                    @update:model-value="onTTLChange"
-                  >
-                    <SelectTrigger class="w-full">
-                      <SelectValue>
-                        <span v-if="selectedTTL === undefined" class="text-muted-foreground">
-                          {{ ttlOptionLabel(config.ttlSeconds) }} ({{ $t("send.uploadOptions.expiration") }})
-                        </span>
-                        <span v-else>{{ ttlOptionLabel(selectedTTL!) }}</span>
-                      </SelectValue>
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectGroup>
-                        <SelectItem value="__default__">
-                          {{ ttlOptionLabel(config.ttlSeconds) }}（默认）
-                        </SelectItem>
-                        <SelectItem
-                          v-for="opt in ttlOptions"
-                          :key="opt.value"
-                          :value="String(opt.value)"
-                        >
-                          {{ ttlOptionLabel(opt.value) }}
-                        </SelectItem>
-                      </SelectGroup>
-                    </SelectContent>
-                  </Select>
-                  <p class="text-xs text-muted-foreground">{{ ttlLimitHint }}</p>
-                </div>
-
-                <!-- 最大下载次数 -->
-                <div class="space-y-2">
-                  <label class="text-sm font-medium">
-                    {{ $t("send.uploadOptions.downloads") }}
-                  </label>
-                  <p class="text-xs text-muted-foreground">
-                    {{ $t("send.uploadOptions.downloadsHint") }}
-                  </p>
-                  <Select
-                    :model-value="selectedDownloads !== undefined ? String(selectedDownloads) : '__default__'"
-                    @update:model-value="onDownloadsChange"
-                  >
-                    <SelectTrigger class="w-full">
-                      <SelectValue>
-                        <span v-if="selectedDownloads === undefined" class="text-muted-foreground">
-                          {{ downloadOptionLabel(config.maxDownloads) }}（默认）
-                        </span>
-                        <span v-else>{{ downloadOptionLabel(selectedDownloads!) }}</span>
-                      </SelectValue>
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectGroup>
-                        <SelectItem value="__default__">
-                          {{ downloadOptionLabel(config.maxDownloads) }}（默认）
-                        </SelectItem>
-                        <SelectItem
-                          v-for="opt in downloadOptions"
-                          :key="opt"
-                          :value="String(opt)"
-                        >
-                          {{ downloadOptionLabel(opt) }}
-                        </SelectItem>
-                      </SelectGroup>
-                    </SelectContent>
-                  </Select>
-                  <p class="text-xs text-muted-foreground">{{ downloadsLimitHint }}</p>
-                </div>
-              </div>
-            </div>
+            <UploadOptionsPanel
+              v-model:ttl="selectedTTL"
+              v-model:downloads="selectedDownloads"
+              :default-ttl="config.ttlSeconds"
+              :default-max-downloads="config.maxDownloads"
+              :ttl-limit="config.ttlSeconds"
+              :downloads-limit="config.maxDownloads"
+            />
 
             <Button class="w-full" size="lg" @click="sendFiles">
               {{ $t("send.sendFiles", { n: selectedFiles.length }) }}
@@ -501,34 +288,20 @@ function resetAll(): void {
           </div>
 
           <!-- 空状态：拖放区域 -->
-          <div v-else>
-            <div
-              class="cursor-pointer rounded-xl border-2 border-dashed border-border px-8 py-12 text-center transition-all duration-200 hover:border-primary hover:bg-accent/50"
-              :class="{ 'border-primary bg-accent/50 scale-[1.02]': dragOver }"
-              @dragover.prevent="dragOver = true"
-              @dragleave.prevent="dragOver = false"
-              @drop.prevent="onDrop"
-              @click="triggerFileInput"
-            >
-              <Upload class="mx-auto mb-4 text-muted-foreground" :size="48" />
-              <p class="mb-2 text-lg">{{ $t("send.dropZone") }}</p>
-              <p class="mb-1 text-xs text-muted-foreground">
-                {{ $t("send.selectOrPaste") }}
-              </p>
-              <p class="text-xs text-muted-foreground">{{ fileLimitsText }}</p>
-            </div>
-
-          </div>
+          <FileDropZone
+            v-else
+            :limit-text="fileLimitsText"
+            @files="handleFiles"
+          />
         </template>
 
-        <!-- 阶段 2：上传进度 -->
+        <!-- 上传进度 -->
         <FileUploadProgress
           v-if="showUploadProgress"
           :uploads="fileUploads"
           :overall="overallProgress"
-          @cancel="handleCancel"
+          @cancel="cancelUpload"
         />
-
       </TabsContent>
 
       <!-- 文本 Tab -->
@@ -554,56 +327,23 @@ function resetAll(): void {
     </Tabs>
 
     <!-- 文本分享结果 -->
-    <div v-if="textCode" class="text-center">
-      <Card class="mb-6 bg-muted">
-        <CardContent class="p-8 text-center">
-          <p class="mb-2 text-sm text-muted-foreground">
-            {{ $t("send.textCodeLabel") }}
-          </p>
-          <p class="mb-4 font-mono text-4xl font-bold tracking-[0.3em] text-blue-800">
-            {{ textCode }}
-          </p>
-          <img
-            v-if="qrCodeURI"
-            :src="qrCodeURI"
-            :alt="$t('send.qrAlt')"
-            class="mx-auto mb-4 rounded-lg border"
-            width="160"
-            height="160"
-          />
-          <Button @click="copyTextCode">
-            {{ $t("send.copy") }}
-          </Button>
-        </CardContent>
-      </Card>
-      <Button variant="secondary" class="mt-4" @click="resetAll">
-        {{ $t("send.sendNewContent") }}
-      </Button>
-    </div>
+    <ShareResultPanel
+      v-if="textCode"
+      :code="textCode"
+      :qr-code-u-r-i="qrCodeURI"
+      type="text"
+      @reset="resetAll"
+    />
 
     <!-- 文件上传完成 -->
-    <div v-if="showUploadResult" class="text-center">
-      <Card class="mb-6 bg-muted">
-        <CardContent class="p-8 text-center">
-          <p class="mb-2 text-sm text-muted-foreground">
-            {{ $t("send.shareCodeLabel") }}
-          </p>
-          <p class="mb-4 font-mono text-4xl font-bold tracking-[0.3em] text-blue-800">
-            {{ shareCode }}
-          </p>
-          <img
-            v-if="qrCodeURI"
-            :src="qrCodeURI"
-            :alt="$t('send.qrAlt')"
-            class="mx-auto mb-4 rounded-lg border"
-            width="160"
-            height="160"
-          />
-          <Button @click="copyCode">
-            {{ $t("send.copy") }}
-          </Button>
-        </CardContent>
-      </Card>
+    <div v-if="showUploadResult">
+      <ShareResultPanel
+        :code="shareCode"
+        :qr-code-u-r-i="qrCodeURI"
+        type="file"
+        :uploads="fileUploads"
+        @reset="resetAll"
+      />
 
       <P2PTransfer
         v-if="shareCode"
@@ -611,27 +351,6 @@ function resetAll(): void {
         role="sender"
         @fallback="console.log('P2P fallback, using R2 upload')"
       />
-
-      <!-- 文件结果列表 -->
-      <div class="mb-4 text-left">
-        <div
-          v-for="upload in fileUploads"
-          :key="upload.fileId || upload.filename"
-          class="flex items-center gap-2 border-b border-border py-2"
-        >
-          <span class="flex-1 truncate">{{ upload.filename }}</span>
-          <span class="text-sm text-muted-foreground">{{ formatFileSize(upload.totalBytes) }}</span>
-          <span v-if="upload.status === 'completed'" class="font-bold text-green-600">✓</span>
-          <span v-else-if="upload.status === 'error'" class="font-bold text-red-600">✗</span>
-          <span v-else-if="upload.status === 'cancelled'" class="font-bold text-muted-foreground">—</span>
-        </div>
-      </div>
-
-      <Button variant="secondary" class="mt-4" @click="resetAll">
-        {{ $t("send.sendNewFile") }}
-      </Button>
     </div>
   </div>
-
-
 </template>
