@@ -6,11 +6,12 @@
  *   - 文件类型图标 + 文件名 + 大小
  *   - 单个移除
  *   - 添加更多文件
- *   - 显示总文件数和总大小
+ *   - 文件数量进度条（当前/上限）
+ *   - 总大小进度条（当前/上限）
  *
  * 状态覆盖：
  *   - 空列表：显示提示文案
- *   - 有文件：显示可交互的文件卡片
+ *   - 有文件：显示可交互的文件卡片 + 限制进度条
  *   - 禁用态：隐藏操作按钮（上传中）
  */
 
@@ -19,6 +20,7 @@ import { useI18n } from "vue-i18n";
 import { X, Plus } from "lucide-vue-next";
 import FileTypeIcon from "./FileTypeIcon.vue";
 import { Button } from "./ui/button";
+import { Progress } from "./ui/progress";
 import { formatFileSize } from "../lib/utils";
 import type { SelectedFileInfo } from "../composables/useFileUploadManager";
 
@@ -28,6 +30,10 @@ const props = defineProps<{
   files: SelectedFileInfo[];
   disabled?: boolean;
   canAddMore?: boolean;
+  /** 最大文件数，-1 = 无限制 */
+  maxFiles?: number;
+  /** 最大总大小（字节），-1 = 无限制 */
+  maxTotalSize?: number;
 }>();
 
 const emit = defineEmits<{
@@ -36,6 +42,27 @@ const emit = defineEmits<{
 }>();
 
 const totalSize = computed(() => props.files.reduce((sum, f) => sum + f.size, 0));
+
+/** 文件数量使用百分比（0-100），无限制时返回 0 */
+const fileCountPct = computed(() => {
+  const max = props.maxFiles ?? -1;
+  if (max <= 0) return 0;
+  return Math.min(100, Math.round((props.files.length / max) * 100));
+});
+
+/** 总大小使用百分比（0-100），无限制时返回 0 */
+const totalSizePct = computed(() => {
+  const max = props.maxTotalSize ?? -1;
+  if (max <= 0) return 0;
+  if (totalSize.value === 0) return 0;
+  return Math.min(100, Math.round((totalSize.value / max) * 100));
+});
+
+/** 文件数量是否有限制 */
+const hasFileLimit = computed(() => (props.maxFiles ?? -1) > 0);
+
+/** 总大小是否有限制 */
+const hasSizeLimit = computed(() => (props.maxTotalSize ?? -1) > 0);
 </script>
 
 <template>
@@ -68,18 +95,44 @@ const totalSize = computed(() => props.files.reduce((sum, f) => sum + f.size, 0)
       </Button>
     </div>
 
-    <!-- 底部信息栏 -->
-    <div class="flex items-center justify-between text-sm text-muted-foreground">
-      <span>{{ t('send.fileCount', { n: files.length }) }} · {{ formatFileSize(totalSize) }}</span>
-      <Button
-        v-if="!disabled && canAddMore"
-        variant="ghost"
-        size="sm"
-        @click="emit('addMore')"
-      >
-        <Plus :size="16" class="mr-1" />
-        {{ t('send.addMoreFiles') }}
-      </Button>
+    <!-- 底部信息栏：进度条 + 添加更多按钮 -->
+    <div class="space-y-2">
+      <!-- 文件数量进度条 -->
+      <div v-if="hasFileLimit" class="space-y-1">
+        <div class="flex justify-between text-xs text-muted-foreground">
+          <span>{{ t('send.fileCount', { n: files.length }) }}</span>
+          <span>{{ files.length }} / {{ maxFiles }}</span>
+        </div>
+        <Progress :model-value="fileCountPct" class="h-1.5" />
+      </div>
+      <div v-else class="text-xs text-muted-foreground">
+        {{ t('send.fileCount', { n: files.length }) }}
+      </div>
+
+      <!-- 总大小进度条 -->
+      <div v-if="hasSizeLimit" class="space-y-1">
+        <div class="flex justify-between text-xs text-muted-foreground">
+          <span>{{ t('send.totalSize', { size: formatFileSize(totalSize) }) }}</span>
+          <span>{{ formatFileSize(totalSize) }} / {{ formatFileSize(maxTotalSize!) }}</span>
+        </div>
+        <Progress :model-value="totalSizePct" class="h-1.5" />
+      </div>
+      <div v-else class="text-xs text-muted-foreground">
+        {{ t('send.totalSize', { size: formatFileSize(totalSize) }) }}
+      </div>
+
+      <!-- 添加更多按钮 -->
+      <div class="flex justify-end">
+        <Button
+          v-if="!disabled && canAddMore"
+          variant="ghost"
+          size="sm"
+          @click="emit('addMore')"
+        >
+          <Plus :size="16" class="mr-1" />
+          {{ t('send.addMoreFiles') }}
+        </Button>
+      </div>
     </div>
   </div>
 </template>

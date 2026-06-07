@@ -403,6 +403,8 @@ function resetAll(): void {
             <FileListPreview
               :files="selectedFiles"
               :can-add-more="canAddMoreFiles"
+              :max-files="config.maxFiles"
+              :max-total-size="config.maxTotalSize"
               @remove="removeFile"
               @add-more="triggerFileInput"
             />
