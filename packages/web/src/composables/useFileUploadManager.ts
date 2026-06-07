@@ -136,6 +136,7 @@ export function useFileUploadManager(): {
 
   const canAddMoreFiles = computed(() => {
     const maxFiles = config.value.maxFiles;
+    if (maxFiles === -1) return true;
     return selectedFiles.value.length < maxFiles;
   });
 
@@ -172,7 +173,7 @@ export function useFileUploadManager(): {
 
     for (const file of files) {
       // 检查文件总数上限
-      if (selectedFiles.value.length + result.added >= maxFiles) {
+      if (maxFiles !== -1 && selectedFiles.value.length + result.added >= maxFiles) {
         result.rejected++;
         result.errors.push(`已达最大文件数限制（${maxFiles} 个），"${file.name}" 未添加`);
         continue;
@@ -186,7 +187,7 @@ export function useFileUploadManager(): {
       }
 
       // 检查单文件大小
-      if (file.size > maxFileSize) {
+      if (maxFileSize !== -1 && file.size > maxFileSize) {
         result.rejected++;
         const limitMB = (maxFileSize / (1024 * 1024)).toFixed(0);
         result.errors.push(`文件 "${file.name}" 超过 ${limitMB}MB 限制，已跳过`);
@@ -194,15 +195,17 @@ export function useFileUploadManager(): {
       }
 
       // 检查总大小
-      const currentTotal = selectedFiles.value.reduce((s, f) => s + f.size, 0);
-      const newTotal = currentTotal + file.size;
-      if (newTotal > maxTotalSize) {
-        result.rejected++;
-        const limitMB = (maxTotalSize / (1024 * 1024)).toFixed(0);
-        result.errors.push(
-          `添加 "${file.name}" 后总大小超过 ${limitMB}MB 限制，已跳过`,
-        );
-        continue;
+      if (maxTotalSize !== -1) {
+        const currentTotal = selectedFiles.value.reduce((s, f) => s + f.size, 0);
+        const newTotal = currentTotal + file.size;
+        if (newTotal > maxTotalSize) {
+          result.rejected++;
+          const limitMB = (maxTotalSize / (1024 * 1024)).toFixed(0);
+          result.errors.push(
+            `添加 "${file.name}" 后总大小超过 ${limitMB}MB 限制，已跳过`,
+          );
+          continue;
+        }
       }
 
       // 计算文件 SHA-256 哈希

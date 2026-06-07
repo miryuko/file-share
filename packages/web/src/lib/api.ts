@@ -154,9 +154,13 @@ export interface SiteConfig {
   siteTitle: string;
   siteDescription: string;
   footerNotice: string;
+  /** 单文件最大字节数，-1 = 无限制 */
   maxFileSize: number;
+  /** 总大小上限（字节），-1 = 无限制 */
   maxTotalSize: number;
+  /** 最大文件数，-1 = 无限制 */
   maxFiles: number;
+  /** 文本最大字符数，-1 = 无限制 */
   maxTextSize: number;
   /** 过期时间上限（秒），-1 = 无限制 */
   ttlSeconds: number;

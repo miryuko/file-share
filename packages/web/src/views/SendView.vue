@@ -22,8 +22,14 @@ const { config } = useSiteConfig();
 
 /** 文件限制提示文案（读取后端配置的实际限制值） */
 const fileLimitsText = computed(() => {
-  const maxFileMB = (config.value.maxFileSize / (1024 * 1024)).toFixed(0);
-  const maxTotalMB = (config.value.maxTotalSize / (1024 * 1024)).toFixed(0);
+  const maxFileSize = config.value.maxFileSize;
+  const maxTotalSize = config.value.maxTotalSize;
+  const maxFileMB = maxFileSize === -1
+    ? t("send.uploadOptions.unlimited")
+    : (maxFileSize / (1024 * 1024)).toFixed(0);
+  const maxTotalMB = maxTotalSize === -1
+    ? t("send.uploadOptions.unlimited")
+    : (maxTotalSize / (1024 * 1024)).toFixed(0);
   return t("send.fileLimits", { maxFileSize: maxFileMB, maxTotalSize: maxTotalMB });
 });
 

@@ -78,9 +78,9 @@ export function useSiteConfig(): {
   return { config, loaded, load };
 }
 
-/** 校验限制值是否为正数 */
+/** 校验限制值是否为正数或 -1（无限制） */
 function isValidLimit(value: unknown): value is number {
-  return typeof value === "number" && Number.isFinite(value) && value > 0;
+  return typeof value === "number" && Number.isFinite(value) && (value > 0 || value === -1);
 }
 
 /** 校验 TTL 值：正数或 -1（无限制） */
