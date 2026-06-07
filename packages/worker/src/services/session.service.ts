@@ -1,20 +1,23 @@
 import type { Session, AdminConfig } from "../models/session";
-import { DEFAULT_ADMIN_CONFIG } from "../models/session";
 import type {
   CreateSessionRequest,
   CreateSessionResponse,
 } from "../models/api";
 import { generateCode } from "../utils/code";
-import { validateFiles } from "../utils/validation";
+import { validateFiles, validateUserPreferences } from "../utils/validation";
 import { AppError } from "../utils/error";
 import { storeUploadRef } from "./upload.service";
+import { getAdminConfig } from "./admin.service";
 
 /**
  * 创建传输会话
  *
- * 调用链：校验文件 → 生成分享码 → 创建 R2 multipart uploads → 写入 KV
+ * 调用链：读取管理员配置 → 校验用户偏好 → 校验文件 → 生成分享码 → 创建 R2 multipart uploads → 写入 KV
  *
- * @throws {AppError} VALIDATION_ERROR — 文件列表校验失败
+ * 用户可选的 ttlSeconds、maxDownloads 不得超过管理员配置上限。
+ * 未提供时使用管理员默认值。
+ *
+ * @throws {AppError} VALIDATION_ERROR — 文件列表或用户偏好校验失败
  * @throws {AppError} CODE_COLLISION — 分享码碰撞重试耗尽
  * @throws {AppError} STORAGE_ERROR — KV 写入失败
  */
@@ -22,12 +25,27 @@ export async function createSession(
   input: CreateSessionRequest,
   env: { FILE_KV: KVNamespace; FILE_BUCKET: R2Bucket },
   clientIP: string,
-  config: AdminConfig = DEFAULT_ADMIN_CONFIG,
 ): Promise<CreateSessionResponse> {
-  // 1. 校验
-  validateFiles(input, config);
+  // 1. 读取管理员配置
+  const adminConfig: AdminConfig = await getAdminConfig(env);
 
-  // 2. 生成唯一分享码（碰撞重试最多 3 次）
+  // 2. 校验用户偏好（不超过管理员配置上限）
+  validateUserPreferences(
+    {
+      ttlSeconds: input.ttlSeconds,
+      maxDownloads: input.maxDownloads,
+    },
+    adminConfig,
+  );
+
+  // 3. 校验文件列表
+  validateFiles(input, adminConfig);
+
+  // 4. 合并最终配置：用户偏好优先，未提供时用管理员默认值
+  const effectiveTtlSeconds = input.ttlSeconds ?? adminConfig.ttlSeconds;
+  const effectiveMaxDownloads = input.maxDownloads ?? adminConfig.maxDownloads;
+
+  // 5. 生成唯一分享码（碰撞重试最多 3 次）
   const MAX_RETRIES = 3;
   let code = "";
   for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
@@ -43,11 +61,11 @@ export async function createSession(
     }
   }
 
-  // 3. 为每个文件创建 R2 multipart upload
+  // 6. 为每个文件创建 R2 multipart upload
   const now = Date.now();
   // -1 = unlimited TTL: use a far-future expiry, skip KV expirationTtl
-  const isUnlimitedTtl = config.ttlSeconds === -1;
-  const ttlMs = isUnlimitedTtl ? 100 * 365 * 24 * 3600 * 1000 : config.ttlSeconds * 1000; // 100 years
+  const isUnlimitedTtl = effectiveTtlSeconds === -1;
+  const ttlMs = isUnlimitedTtl ? 100 * 365 * 24 * 3600 * 1000 : effectiveTtlSeconds * 1000; // 100 years
   const files: CreateSessionResponse["files"] = [];
 
   for (let i = 0; i < input.files.length; i++) {
@@ -88,7 +106,7 @@ export async function createSession(
     }
   }
 
-  // 4. 写入 KV 会话
+  // 7. 写入 KV 会话
   const session: Session = {
     code,
     files: input.files.map((f, i) => ({
@@ -101,7 +119,7 @@ export async function createSession(
     totalSize: input.files.reduce((sum, f) => sum + f.size, 0),
     createdAt: now,
     expiresAt: now + ttlMs,
-    maxDownloads: config.maxDownloads,
+    maxDownloads: effectiveMaxDownloads,
     downloadCount: 0,
     creatorIP: clientIP,
   };
@@ -110,7 +128,7 @@ export async function createSession(
     await env.FILE_KV.put(
       `code:${code}`,
       JSON.stringify(session),
-      isUnlimitedTtl ? undefined : { expirationTtl: config.ttlSeconds },
+      isUnlimitedTtl ? undefined : { expirationTtl: effectiveTtlSeconds },
     );
   } catch (err) {
     console.error(JSON.stringify({
@@ -180,19 +198,4 @@ export async function getSession(
   }
 
   return session;
-}
-
-/**
- * 读取管理员配置（从 KV 或返回默认值）
- */
-export async function getAdminConfig(
-  env: { FILE_KV: KVNamespace },
-): Promise<AdminConfig> {
-  const raw = await env.FILE_KV.get("admin:config");
-  if (!raw) return DEFAULT_ADMIN_CONFIG;
-  try {
-    return { ...DEFAULT_ADMIN_CONFIG, ...JSON.parse(raw) };
-  } catch {
-    return DEFAULT_ADMIN_CONFIG;
-  }
 }

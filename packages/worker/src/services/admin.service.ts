@@ -310,5 +310,7 @@ export async function getSiteConfig(
     maxTotalSize: config.maxTotalSize,
     maxFiles: config.maxFiles,
     maxTextSize: config.maxTextSize,
+    ttlSeconds: config.ttlSeconds,
+    maxDownloads: config.maxDownloads,
   };
 }

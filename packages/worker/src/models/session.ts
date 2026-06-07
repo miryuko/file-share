@@ -72,6 +72,10 @@ export interface SiteConfig {
   maxFiles: number;
   /** 文本分享最大字符数（Unicode 码点），-1 = 无限制 */
   maxTextSize: number;
+  /** 文件过期时间上限（秒），-1 = 无限制 */
+  ttlSeconds: number;
+  /** 最大下载次数上限，-1 = 无限制 */
+  maxDownloads: number;
 }
 
 /** 默认管理员配置 */

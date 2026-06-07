@@ -9,6 +9,10 @@ export interface CreateSessionRequest {
     size: number;
     contentType?: string;
   }[];
+  /** 用户选择的过期时间（秒），不得超过站点配置上限，-1 = 永久 */
+  ttlSeconds?: number;
+  /** 用户选择的最大下载次数，不得超过站点配置上限，-1 = 无限制 */
+  maxDownloads?: number;
 }
 
 /** POST /api/upload/:code/:fileId/complete 请求体 */
