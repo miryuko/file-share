@@ -70,6 +70,19 @@
       "totalTooBig": "总文件大小超过 {limit}MB 限制",
       "textEmpty": "请输入要分享的文本内容",
       "textTooLong": "文本过长（{count} 字符），当前限制 {limit} 字符"
+    },
+    "uploadOptions": {
+      "title": "上传选项",
+      "expiration": "过期时间",
+      "expirationHint": "文件保留时长，过期后自动删除",
+      "expirationLimitOff": "最长不超过 {limit}",
+      "expirationLimitUnlimited": "无时间限制",
+      "downloads": "最大下载次数",
+      "downloadsHint": "设置后可下载的次数",
+      "downloadsLimitOff": "最多允许 {max} 次",
+      "downloadsLimitUnlimited": "无次数限制",
+      "unlimited": "无限制",
+      "forever": "永久有效"
     }
   },
   "receive": {

@@ -89,6 +89,13 @@ const PROGRESS_THROTTLE_MS = 200;
 
 // ── composable ──
 
+export interface UploadOptions {
+  /** 用户选择的过期时间（秒），-1 = 永久 */
+  ttlSeconds?: number;
+  /** 用户选择的最大下载次数，-1 = 无限制 */
+  maxDownloads?: number;
+}
+
 export function useFileUploadManager(): {
   // 阶段 1：文件选择
   selectedFiles: Ref<SelectedFileInfo[]>;
@@ -102,7 +109,7 @@ export function useFileUploadManager(): {
   shareCode: Ref<string>;
   fileUploads: Ref<FileUploadProgress[]>;
   overallProgress: ComputedRef<OverallProgress>;
-  startUpload: () => Promise<string>;
+  startUpload: (options?: UploadOptions) => Promise<string>;
   cancelUpload: () => void;
 
   // 重置
@@ -240,7 +247,7 @@ export function useFileUploadManager(): {
   // ── 阶段 2 方法 ──
 
   /** 开始上传所有审核通过的文件 */
-  async function startUpload(): Promise<string> {
+  async function startUpload(options?: UploadOptions): Promise<string> {
     if (selectedFiles.value.length === 0) {
       throw new Error("没有可上传的文件");
     }
@@ -264,13 +271,17 @@ export function useFileUploadManager(): {
     }));
 
     try {
-      // 1. 创建会话
+      // 1. 创建会话（传递用户配置偏好）
       const session = await createSession(
         selectedFiles.value.map((sf) => ({
           filename: sf.name,
           size: sf.size,
           contentType: sf.type || undefined,
         })),
+        {
+          ttlSeconds: options?.ttlSeconds,
+          maxDownloads: options?.maxDownloads,
+        },
       );
 
       if (abortController.signal.aborted) {

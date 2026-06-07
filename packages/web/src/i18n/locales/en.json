@@ -70,6 +70,19 @@
       "totalTooBig": "Total file size exceeds {limit}MB limit",
       "textEmpty": "Please enter text content to share",
       "textTooLong": "Text too long ({count} characters), limit is {limit} characters"
+    },
+    "uploadOptions": {
+      "title": "Upload Options",
+      "expiration": "Expiration",
+      "expirationHint": "How long files remain available before auto-deletion",
+      "expirationLimitOff": "Maximum {limit}",
+      "expirationLimitUnlimited": "No time limit",
+      "downloads": "Max Downloads",
+      "downloadsHint": "Maximum number of times files can be downloaded",
+      "downloadsLimitOff": "Maximum {max} downloads",
+      "downloadsLimitUnlimited": "No download limit",
+      "unlimited": "Unlimited",
+      "forever": "Forever"
     }
   },
   "receive": {

@@ -18,6 +18,8 @@ const DEFAULT_SITE_CONFIG: SiteConfig = {
   maxTotalSize: 500 * 1024 * 1024,
   maxFiles: 20,
   maxTextSize: 100000,
+  ttlSeconds: 3600,
+  maxDownloads: 20,
 };
 
 /** 模块级缓存 */
@@ -53,6 +55,12 @@ export function useSiteConfig(): {
         maxTextSize: isValidLimit(remote.maxTextSize)
           ? remote.maxTextSize
           : DEFAULT_SITE_CONFIG.maxTextSize,
+        ttlSeconds: isValidTTL(remote.ttlSeconds)
+          ? remote.ttlSeconds
+          : DEFAULT_SITE_CONFIG.ttlSeconds,
+        maxDownloads: isValidMaxDownloads(remote.maxDownloads)
+          ? remote.maxDownloads
+          : DEFAULT_SITE_CONFIG.maxDownloads,
       };
       loaded.value = true;
     } catch (err) {
@@ -73,4 +81,14 @@ export function useSiteConfig(): {
 /** 校验限制值是否为正数 */
 function isValidLimit(value: unknown): value is number {
   return typeof value === "number" && Number.isFinite(value) && value > 0;
+}
+
+/** 校验 TTL 值：正数或 -1（无限制） */
+function isValidTTL(value: unknown): value is number {
+  return typeof value === "number" && Number.isFinite(value) && (value > 0 || value === -1);
+}
+
+/** 校验最大下载次数：正数或 -1（无限制） */
+function isValidMaxDownloads(value: unknown): value is number {
+  return typeof value === "number" && Number.isFinite(value) && (value > 0 || value === -1);
 }

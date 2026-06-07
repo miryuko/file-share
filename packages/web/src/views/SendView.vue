@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, watch, computed } from "vue";
 import { useI18n } from "vue-i18n";
-import { Upload, WifiOff } from "lucide-vue-next";
+import { Upload, WifiOff, ChevronDown, ChevronRight } from "lucide-vue-next";
 import { useFileUploadManager } from "../composables/useFileUploadManager";
 import { useConnectionStatus } from "../composables/useConnectionStatus";
 import { useSiteConfig } from "../composables/useSiteConfig";
@@ -14,6 +14,7 @@ import { Button } from "../components/ui/button";
 import { Card, CardContent } from "../components/ui/card";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "../components/ui/tabs";
 import { Textarea } from "../components/ui/textarea";
+import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from "../components/ui/select";
 
 const { t } = useI18n();
 const { config } = useSiteConfig();
@@ -46,6 +47,95 @@ const {
   cancelUpload,
   reset: resetUpload,
 } = useFileUploadManager();
+
+// ── 上传选项 ──
+/** 是否展开上传选项面板 */
+const showUploadOptions = ref(false);
+
+/** TTL 预设值（秒） */
+const TTL_PRESETS = [
+  { label: "10 分钟", value: 600 },
+  { label: "30 分钟", value: 1800 },
+  { label: "1 小时", value: 3600 },
+  { label: "6 小时", value: 21600 },
+  { label: "24 小时", value: 86400 },
+  { label: "7 天", value: 604800 },
+  { label: "30 天", value: 2592000 },
+];
+
+/** 下载次数预设 */
+const DOWNLOAD_PRESETS = [1, 3, 5, 10, 20, 50, 100];
+
+/** 可选的 TTL 选项（不超过站点配置上限） */
+const ttlOptions = computed(() => {
+  const max = config.value.ttlSeconds;
+  const options = TTL_PRESETS.filter((p) => max === -1 || p.value <= max);
+  if (max === -1) {
+    options.push({ label: t("send.uploadOptions.forever"), value: -1 });
+  }
+  return options;
+});
+
+/** 可选的下载次数（不超过站点配置上限） */
+const downloadOptions = computed(() => {
+  const max = config.value.maxDownloads;
+  const options = DOWNLOAD_PRESETS.filter((n) => max === -1 || n <= max);
+  if (max === -1) {
+    options.push(-1); // "无限制"
+  }
+  return options;
+});
+
+/** 用户选择的过期时间（秒），undefined 表示使用站点默认值 */
+const selectedTTL = ref<number | undefined>(undefined);
+/** 用户选择的最大下载次数，undefined 表示使用站点默认值 */
+const selectedDownloads = ref<number | undefined>(undefined);
+
+/** TTL 上限提示文案 */
+const ttlLimitHint = computed(() => {
+  const max = config.value.ttlSeconds;
+  if (max === -1) return t("send.uploadOptions.expirationLimitUnlimited");
+  return t("send.uploadOptions.expirationLimitOff", {
+    limit: formatDuration(max),
+  });
+});
+
+/** 下载次数上限提示文案 */
+const downloadsLimitHint = computed(() => {
+  const max = config.value.maxDownloads;
+  if (max === -1) return t("send.uploadOptions.downloadsLimitUnlimited");
+  return t("send.uploadOptions.downloadsLimitOff", { max });
+});
+
+/** 格式化秒数为可读字符串 */
+function formatDuration(seconds: number): string {
+  if (seconds < 60) return `${seconds} 秒`;
+  if (seconds < 3600) return `${Math.round(seconds / 60)} 分钟`;
+  if (seconds < 86400) return `${Math.round(seconds / 3600)} 小时`;
+  return `${Math.round(seconds / 86400)} 天`;
+}
+
+/** 格式化 TTL 选项标签 */
+function ttlOptionLabel(value: number): string {
+  if (value === -1) return t("send.uploadOptions.forever");
+  return formatDuration(value);
+}
+
+/** 格式化下载选项标签 */
+function downloadOptionLabel(value: number): string {
+  if (value === -1) return t("send.uploadOptions.unlimited");
+  return `${value} 次`;
+}
+
+/** 处理 TTL 选择变更 */
+function onTTLChange(value: unknown): void {
+  selectedTTL.value = String(value) === "__default__" ? undefined : Number(value);
+}
+
+/** 处理下载次数选择变更 */
+function onDownloadsChange(value: unknown): void {
+  selectedDownloads.value = String(value) === "__default__" ? undefined : Number(value);
+}
 
 function buildShareUrl(code: string): string {
   return `${window.location.origin}/receive/${code}`;
@@ -155,7 +245,10 @@ function onPaste(event: ClipboardEvent): void {
 async function sendFiles(): Promise<void> {
   uploadError.value = "";
   try {
-    await startUpload();
+    await startUpload({
+      ttlSeconds: selectedTTL.value,
+      maxDownloads: selectedDownloads.value,
+    });
   } catch (err) {
     if (err instanceof ApiError) {
       uploadError.value = err.message;
@@ -248,6 +341,9 @@ function resetAll(): void {
   textError.value = "";
   uploadError.value = "";
   addWarnings.value = [];
+  selectedTTL.value = undefined;
+  selectedDownloads.value = undefined;
+  showUploadOptions.value = false;
 }
 
 function formatSize(bytes: number): string {
@@ -324,6 +420,104 @@ function formatSize(bytes: number): string {
               class="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600"
             >
               {{ uploadError }}
+            </div>
+
+            <!-- 上传选项（可折叠） -->
+            <div class="rounded-lg border border-border">
+              <button
+                class="flex w-full items-center justify-between px-4 py-3 text-sm font-medium hover:bg-accent/50"
+                @click="showUploadOptions = !showUploadOptions"
+              >
+                <span>{{ $t("send.uploadOptions.title") }}</span>
+                <ChevronRight
+                  v-if="!showUploadOptions"
+                  :size="16"
+                  class="text-muted-foreground"
+                />
+                <ChevronDown
+                  v-else
+                  :size="16"
+                  class="text-muted-foreground"
+                />
+              </button>
+
+              <div v-if="showUploadOptions" class="space-y-4 border-t border-border px-4 py-4">
+                <!-- 过期时间 -->
+                <div class="space-y-2">
+                  <label class="text-sm font-medium">
+                    {{ $t("send.uploadOptions.expiration") }}
+                  </label>
+                  <p class="text-xs text-muted-foreground">
+                    {{ $t("send.uploadOptions.expirationHint") }}
+                  </p>
+                  <Select
+                    :model-value="selectedTTL !== undefined ? String(selectedTTL) : '__default__'"
+                    @update:model-value="onTTLChange"
+                  >
+                    <SelectTrigger class="w-full">
+                      <SelectValue>
+                        <span v-if="selectedTTL === undefined" class="text-muted-foreground">
+                          {{ ttlOptionLabel(config.ttlSeconds) }} ({{ $t("send.uploadOptions.expiration") }})
+                        </span>
+                        <span v-else>{{ ttlOptionLabel(selectedTTL!) }}</span>
+                      </SelectValue>
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectGroup>
+                        <SelectItem value="__default__">
+                          {{ ttlOptionLabel(config.ttlSeconds) }}（默认）
+                        </SelectItem>
+                        <SelectItem
+                          v-for="opt in ttlOptions"
+                          :key="opt.value"
+                          :value="String(opt.value)"
+                        >
+                          {{ ttlOptionLabel(opt.value) }}
+                        </SelectItem>
+                      </SelectGroup>
+                    </SelectContent>
+                  </Select>
+                  <p class="text-xs text-muted-foreground">{{ ttlLimitHint }}</p>
+                </div>
+
+                <!-- 最大下载次数 -->
+                <div class="space-y-2">
+                  <label class="text-sm font-medium">
+                    {{ $t("send.uploadOptions.downloads") }}
+                  </label>
+                  <p class="text-xs text-muted-foreground">
+                    {{ $t("send.uploadOptions.downloadsHint") }}
+                  </p>
+                  <Select
+                    :model-value="selectedDownloads !== undefined ? String(selectedDownloads) : '__default__'"
+                    @update:model-value="onDownloadsChange"
+                  >
+                    <SelectTrigger class="w-full">
+                      <SelectValue>
+                        <span v-if="selectedDownloads === undefined" class="text-muted-foreground">
+                          {{ downloadOptionLabel(config.maxDownloads) }}（默认）
+                        </span>
+                        <span v-else>{{ downloadOptionLabel(selectedDownloads!) }}</span>
+                      </SelectValue>
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectGroup>
+                        <SelectItem value="__default__">
+                          {{ downloadOptionLabel(config.maxDownloads) }}（默认）
+                        </SelectItem>
+                        <SelectItem
+                          v-for="opt in downloadOptions"
+                          :key="opt"
+                          :value="String(opt)"
+                        >
+                          {{ downloadOptionLabel(opt) }}
+                        </SelectItem>
+                      </SelectGroup>
+                    </SelectContent>
+                  </Select>
+                  <p class="text-xs text-muted-foreground">{{ downloadsLimitHint }}</p>
+                </div>
+              </div>
             </div>
 
             <Button class="w-full" size="lg" @click="sendFiles">

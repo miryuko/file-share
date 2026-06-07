@@ -54,11 +54,16 @@ async function request<T>(url: string, options?: RequestInit): Promise<T> {
 /** 创建上传会话 */
 export async function createSession(
   files: { filename: string; size: number; contentType?: string }[],
+  options?: { ttlSeconds?: number; maxDownloads?: number },
 ): Promise<CreateSessionResponse> {
   return request<CreateSessionResponse>("/api/session/create", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ files }),
+    body: JSON.stringify({
+      files,
+      ...(options?.ttlSeconds !== undefined ? { ttlSeconds: options.ttlSeconds } : {}),
+      ...(options?.maxDownloads !== undefined ? { maxDownloads: options.maxDownloads } : {}),
+    }),
   });
 }
 
@@ -153,6 +158,10 @@ export interface SiteConfig {
   maxTotalSize: number;
   maxFiles: number;
   maxTextSize: number;
+  /** 过期时间上限（秒），-1 = 无限制 */
+  ttlSeconds: number;
+  /** 下载次数上限，-1 = 无限制 */
+  maxDownloads: number;
 }
 
 /** 获取公开站点配置（无需认证） */
