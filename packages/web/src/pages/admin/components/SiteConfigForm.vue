@@ -6,7 +6,7 @@
  * 单位换算、无限制切换、保存操作。
  * 不负责：数据加载、认证 —— 这些由父组件处理。
  */
-import { ref } from "vue";
+import { ref, watch } from "vue";
 import { Button } from "../../../components/ui/button";
 import { Input } from "../../../components/ui/input";
 import { Textarea } from "../../../components/ui/textarea";
@@ -219,6 +219,13 @@ function initFields(): void {
     unlimited.value.rateLimitPerMinute = false;
   }
 }
+
+/** config 变化时自动同步无限制开关状态 */
+watch(
+  () => config.value,
+  () => initFields(),
+  { immediate: true },
+);
 
 defineExpose({ initFields });
 </script>
