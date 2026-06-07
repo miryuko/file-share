@@ -28,6 +28,14 @@ export default defineConfigWithVueTs(
       'vue/multi-word-component-names': 'off',
     },
   },
+  {
+    // pages 目录下 index.vue 使用单名单词组件名，允许
+    name: 'app/pages-rules',
+    files: ['src/pages/**/*.vue'],
+    rules: {
+      'vue/multi-word-component-names': 'off',
+    },
+  },
   vueTsConfigs.recommended,
 
   {

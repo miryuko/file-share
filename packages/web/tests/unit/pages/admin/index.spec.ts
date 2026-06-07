@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { mount } from "@vue/test-utils";
-import AdminView from "../../../src/views/AdminView.vue";
-import i18n from "../../../src/i18n";
+import AdminView from "../../../../src/pages/admin/index.vue";
+import i18n from "../../../../src/i18n";
 
 function mountWithI18n(component: Parameters<typeof mount>[0], options?: Parameters<typeof mount>[1]) {
   i18n.global.locale.value = 'zh-CN';

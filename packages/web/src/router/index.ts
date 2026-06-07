@@ -1,5 +1,5 @@
 import { createRouter, createWebHistory } from 'vue-router'
-import SendView from '../views/SendView.vue'
+import SendView from '../pages/send/index.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -12,18 +12,17 @@ const router = createRouter({
     {
       path: '/receive',
       name: 'receive',
-      // route level code-splitting
-      component: () => import('../views/ReceiveView.vue'),
+      component: () => import('../pages/receive/index.vue'),
     },
     {
       path: '/receive/:code',
       name: 'receive-code',
-      component: () => import('../views/ReceiveView.vue'),
+      component: () => import('../pages/receive/index.vue'),
     },
     {
       path: '/admin',
       name: 'admin',
-      component: () => import('../views/AdminView.vue'),
+      component: () => import('../pages/admin/index.vue'),
     },
   ],
 })

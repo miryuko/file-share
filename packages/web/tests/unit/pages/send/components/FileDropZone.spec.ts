@@ -1,7 +1,7 @@
 import { describe, it, expect, vi } from "vitest";
 import { mount } from "@vue/test-utils";
-import FileDropZone from "../../../../src/components/send/FileDropZone.vue";
-import i18n from "../../../../src/i18n";
+import FileDropZone from "../../../../../src/pages/send/components/FileDropZone.vue";
+import i18n from "../../../../../src/i18n";
 
 function mountWithI18n(component: Parameters<typeof mount>[0], options?: Parameters<typeof mount>[1]) {
   return mount(component, {

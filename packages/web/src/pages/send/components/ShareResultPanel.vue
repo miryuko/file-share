@@ -11,10 +11,10 @@
  */
 import { useI18n } from "vue-i18n";
 import { toast } from "vue-sonner";
-import { Card, CardContent } from "../ui/card";
-import { Button } from "../ui/button";
-import type { FileUploadProgress } from "../../composables/useFileUploadManager";
-import { formatFileSize } from "../../lib/utils";
+import { Card, CardContent } from "../../../components/ui/card";
+import { Button } from "../../../components/ui/button";
+import type { FileUploadProgress } from "../../../composables/useFileUploadManager";
+import { formatFileSize } from "../../../lib/utils";
 
 const { t } = useI18n();
 

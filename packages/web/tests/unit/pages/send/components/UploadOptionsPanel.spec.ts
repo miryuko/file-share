@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { mount } from "@vue/test-utils";
-import UploadOptionsPanel from "../../../../src/components/send/UploadOptionsPanel.vue";
-import i18n from "../../../../src/i18n";
+import UploadOptionsPanel from "../../../../../src/pages/send/components/UploadOptionsPanel.vue";
+import i18n from "../../../../../src/i18n";
 
 function mountWithI18n(component: Parameters<typeof mount>[0], options?: Parameters<typeof mount>[1]) {
   return mount(component, {

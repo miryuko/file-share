@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { mount } from "@vue/test-utils";
-import ShareResultPanel from "../../../../src/components/send/ShareResultPanel.vue";
-import i18n from "../../../../src/i18n";
+import ShareResultPanel from "../../../../../src/pages/send/components/ShareResultPanel.vue";
+import i18n from "../../../../../src/i18n";
 
 function mountWithI18n(component: Parameters<typeof mount>[0], options?: Parameters<typeof mount>[1]) {
   return mount(component, {

@@ -74,13 +74,24 @@ export async function downloadFile(
   }
 
   const remainingTtl = Math.ceil((session.expiresAt - Date.now()) / 1000);
-  if (remainingTtl > 0) {
+  const KV_TTL_MAX = 2147483647;
+  if (remainingTtl > 0 && remainingTtl <= KV_TTL_MAX) {
     try {
       await env.FILE_KV.put(`code:${code}`, JSON.stringify(session), {
         expirationTtl: remainingTtl,
       });
     } catch (err) {
       // 计数更新失败不阻塞下载
+      console.warn(JSON.stringify({
+        event: "kv.count_update.failed",
+        code,
+        error: String(err),
+      }));
+    }
+  } else if (remainingTtl > KV_TTL_MAX) {
+    try {
+      await env.FILE_KV.put(`code:${code}`, JSON.stringify(session));
+    } catch (err) {
       console.warn(JSON.stringify({
         event: "kv.count_update.failed",
         code,

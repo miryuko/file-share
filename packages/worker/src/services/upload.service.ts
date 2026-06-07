@@ -211,12 +211,16 @@ export async function markSessionReady(
   const session = JSON.parse(sessionRaw);
   session.status = "ready";
 
-  // 计算剩余 TTL
+  // 计算剩余 TTL，超过 KV 32 位有符号整数上限则不设过期
   const remainingTtl = Math.ceil((session.expiresAt - Date.now()) / 1000);
-  if (remainingTtl > 0) {
+  const KV_TTL_MAX = 2147483647; // Max signed 32-bit integer
+  if (remainingTtl > 0 && remainingTtl <= KV_TTL_MAX) {
     await env.FILE_KV.put(`code:${code}`, JSON.stringify(session), {
       expirationTtl: remainingTtl,
     });
+  } else if (remainingTtl > KV_TTL_MAX) {
+    // TTL exceeds KV limit (unlimited or very long TTL), write without expiration
+    await env.FILE_KV.put(`code:${code}`, JSON.stringify(session));
   }
 
   console.log(JSON.stringify({

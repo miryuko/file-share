@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { mount } from "@vue/test-utils";
-import SendView from "../../../src/views/SendView.vue";
-import i18n from "../../../src/i18n";
+import SendView from "../../../../src/pages/send/index.vue";
+import i18n from "../../../../src/i18n";
 
 function mountWithI18n(component: Parameters<typeof mount>[0], options?: Parameters<typeof mount>[1]) {
   i18n.global.locale.value = 'zh-CN';

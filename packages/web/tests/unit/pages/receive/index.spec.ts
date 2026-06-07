@@ -1,8 +1,8 @@
 import { describe, it, expect, vi, beforeEach, beforeAll } from "vitest";
 import { mount } from "@vue/test-utils";
 import { nextTick } from "vue";
-import ReceiveView from "../../../src/views/ReceiveView.vue";
-import i18n from "../../../src/i18n";
+import ReceiveView from "../../../../src/pages/receive/index.vue";
+import i18n from "../../../../src/i18n";
 
 // Mock vue-router
 vi.mock("vue-router", () => ({

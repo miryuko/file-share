@@ -3,12 +3,12 @@ import { ref, watch, onMounted } from "vue";
 import { useRoute } from "vue-router";
 import { useI18n } from "vue-i18n";
 import { toast } from "vue-sonner";
-import { getCodeInfo, getDownloadUrl, ApiError } from "../lib/api";
-import { formatFileSize } from "../lib/utils";
-import P2PTransfer from "../components/P2PTransfer.vue";
-import { Button } from "../components/ui/button";
-import { Card, CardContent } from "../components/ui/card";
-import { InputOTP, InputOTPGroup, InputOTPSlot } from "../components/ui/input-otp";
+import { getCodeInfo, getDownloadUrl, ApiError } from "../../lib/api";
+import { formatFileSize } from "../../lib/utils";
+import P2PTransfer from "../../components/P2PTransfer.vue";
+import { Button } from "../../components/ui/button";
+import { Card, CardContent } from "../../components/ui/card";
+import { InputOTP, InputOTPGroup, InputOTPSlot } from "../../components/ui/input-otp";
 
 const { t } = useI18n();
 const route = useRoute();

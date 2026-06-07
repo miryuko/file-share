@@ -8,21 +8,21 @@
 import { ref, watch, computed } from "vue";
 import { useI18n } from "vue-i18n";
 import { toast } from "vue-sonner";
-import { WifiOff } from "lucide-vue-next";
-import { useFileUploadManager } from "../composables/useFileUploadManager";
-import { useConnectionStatus } from "../composables/useConnectionStatus";
-import { useSiteConfig } from "../composables/useSiteConfig";
-import { ApiError } from "../lib/api";
-import { generateQRCodeDataURI } from "../lib/qrcode";
-import FileDropZone from "../components/send/FileDropZone.vue";
-import UploadOptionsPanel from "../components/send/UploadOptionsPanel.vue";
-import ShareResultPanel from "../components/send/ShareResultPanel.vue";
-import FileListPreview from "../components/FileListPreview.vue";
-import FileUploadProgress from "../components/FileUploadProgress.vue";
-import P2PTransfer from "../components/P2PTransfer.vue";
-import { Button } from "../components/ui/button";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "../components/ui/tabs";
-import { Textarea } from "../components/ui/textarea";
+import { useFileUploadManager } from "../../composables/useFileUploadManager";
+import { useConnectionStatus } from "../../composables/useConnectionStatus";
+import { useSiteConfig } from "../../composables/useSiteConfig";
+import { ApiError } from "../../lib/api";
+import { generateQRCodeDataURI } from "../../lib/qrcode";
+import ConnectionStatusBanner from "../../components/ConnectionStatusBanner.vue";
+import FileDropZone from "./components/FileDropZone.vue";
+import TextSharePanel from "./components/TextSharePanel.vue";
+import UploadOptionsPanel from "./components/UploadOptionsPanel.vue";
+import ShareResultPanel from "./components/ShareResultPanel.vue";
+import FileListPreview from "../../components/FileListPreview.vue";
+import FileUploadProgress from "../../components/FileUploadProgress.vue";
+import P2PTransfer from "../../components/P2PTransfer.vue";
+import { Button } from "../../components/ui/button";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "../../components/ui/tabs";
 
 const { t } = useI18n();
 const { config } = useSiteConfig();
@@ -70,9 +70,7 @@ const selectedDownloads = ref<number | undefined>(undefined);
 const fileInput = ref<HTMLInputElement | null>(null);
 
 // ── 文本分享 ──
-const textContent = ref("");
 const textCode = ref("");
-const textLoading = ref(false);
 
 // ── QR 码 ──
 const qrCodeURI = ref("");
@@ -172,42 +170,8 @@ async function sendFiles(): Promise<void> {
 
 // ── 文本分享 ──
 
-async function handleTextSend(): Promise<void> {
-  const content = textContent.value.trim();
-
-  if (!content) {
-    toast.error(t("send.validation.textEmpty"));
-    return;
-  }
-
-  const maxTextSize = config.value.maxTextSize;
-  const charCount = [...content].length;
-  if (maxTextSize !== -1 && charCount > maxTextSize) {
-    toast.error(t("send.validation.textTooLong", { count: charCount, limit: maxTextSize }));
-    return;
-  }
-
-  textLoading.value = true;
-  try {
-    const res = await fetch("/api/text/create", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ content }),
-    });
-
-    if (!res.ok) {
-      const body = (await res.json()) as { message: string };
-      toast.error(body.message || t("send.sendFailed"));
-      return;
-    }
-
-    const { code } = (await res.json()) as { code: string };
-    textCode.value = code;
-  } catch {
-    toast.error(t("send.networkError"));
-  } finally {
-    textLoading.value = false;
-  }
+function onTextSent(code: string): void {
+  textCode.value = code;
 }
 
 // ── 重置 ──
@@ -215,7 +179,6 @@ async function handleTextSend(): Promise<void> {
 function resetAll(): void {
   resetUpload();
   textCode.value = "";
-  textContent.value = "";
   selectedTTL.value = undefined;
   selectedDownloads.value = undefined;
 }
@@ -231,14 +194,7 @@ function resetAll(): void {
       {{ $t("send.subtitle") }}
     </p>
 
-    <!-- 连接状态横幅 -->
-    <div
-      v-if="!isOnline"
-      class="mb-4 flex items-center justify-center gap-2 rounded-lg border border-warning/20 bg-warning/10 px-4 py-2 text-sm text-warning"
-    >
-      <WifiOff :size="16" />
-      {{ $t("send.connectionOffline") }}
-    </div>
+    <ConnectionStatusBanner :is-online="isOnline" />
 
     <!-- 模式切换 -->
     <Tabs
@@ -305,24 +261,8 @@ function resetAll(): void {
       </TabsContent>
 
       <!-- 文本 Tab -->
-      <TabsContent value="text" class="mt-4 space-y-3">
-        <Textarea
-          v-model="textContent"
-          :placeholder="$t('send.textPlaceholder')"
-          :rows="8"
-          class="resize-y"
-        />
-        <div class="flex items-center justify-between">
-          <span class="text-xs text-muted-foreground">
-            {{ $t('send.charCount', { count: [...textContent].length.toLocaleString() }) }}
-          </span>
-          <Button
-            :disabled="!textContent.trim() || textLoading"
-            @click="handleTextSend"
-          >
-            {{ textLoading ? $t("send.sending") : $t("send.sendText") }}
-          </Button>
-        </div>
+      <TabsContent value="text" class="mt-4">
+        <TextSharePanel @sent="onTextSent" />
       </TabsContent>
     </Tabs>
 
